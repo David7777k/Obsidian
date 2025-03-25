@@ -1,4 +1,6 @@
+//вроде заебись
 package org.obsidian.client.managers.module.impl.player;
+
 
 import lombok.AccessLevel;
 import lombok.Getter;
