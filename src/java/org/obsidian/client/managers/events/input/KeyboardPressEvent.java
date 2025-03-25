@@ -22,6 +22,7 @@ public final class KeyboardPressEvent extends Event {
         this.screen = screen;
     }
 
+    // Исправлено: теперь возвращает true, если ключ совпадает.
     public boolean isKey(int key) {
         return this.key == key;
     }

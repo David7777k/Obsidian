@@ -8,30 +8,24 @@ import java.util.function.Supplier;
 public class BindSetting extends Setting<Integer> {
     public final boolean allowMouse;
 
-    private Integer cachedValue;
-
     public BindSetting(Module parent, String name) {
         super(parent, name, -1);
         this.allowMouse = true;
-        cachedValue = -1;
     }
 
     public BindSetting(Module parent, String name, boolean allowMouse) {
         super(parent, name, -1);
         this.allowMouse = allowMouse;
-        cachedValue = -1;
     }
 
     public BindSetting(Module parent, String name, Integer value) {
         super(parent, name, value);
         this.allowMouse = true;
-        cachedValue = value;
     }
 
     public BindSetting(Module parent, String name, Integer value, boolean allowMouse) {
         super(parent, name, value);
         this.allowMouse = allowMouse;
-        cachedValue = value;
     }
 
     @Override
@@ -41,17 +35,12 @@ public class BindSetting extends Setting<Integer> {
 
     @Override
     public BindSetting set(Integer value) {
-        BindSetting set = (BindSetting) super.set(value);
-        this.cachedValue = super.getValue();
-        return set;
+        return (BindSetting) super.set(value);
     }
 
     @Override
     public BindSetting onAction(Runnable action) {
-        return (BindSetting) super.onAction(() -> {
-            action.run();
-            this.cachedValue = super.getValue();
-        });
+        return (BindSetting) super.onAction(action);
     }
 
     @Override
@@ -61,9 +50,7 @@ public class BindSetting extends Setting<Integer> {
 
     @Override
     public Integer getValue() {
-        if (cachedValue == null) {
-            cachedValue = super.getValue();
-        }
-        return cachedValue;
+        // Возвращаем всегда актуальное значение
+        return super.getValue();
     }
 }

@@ -113,7 +113,8 @@ public final class ModuleManager extends LinkedHashMap<Class<? extends Module>, 
                 new AutoMiner(),
                 new AutoLeave(),
                 new AutoSell(),
-                new AutoF5()
+                new FastEXP(),
+                new CordDroper()
 
         );
         this.values().stream().filter(Module::isAutoEnabled).forEach(module -> module.setEnabled(true, false));

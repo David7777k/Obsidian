@@ -104,7 +104,7 @@ public class Obsidian {
 
         this.initVia();
 
-        log("Initializing..");
+        log("Инициализация..");
 
         this.profiler.start();
 
@@ -118,7 +118,7 @@ public class Obsidian {
 
         this.profiler.stop();
 
-        log("Initialized in " + profiler.getTotalTimeMS() + "ms.");
+        log("Инициализировано в " + profiler.getTotalTimeMS() + "ms.");
 
         loadAllConfigs();
 
