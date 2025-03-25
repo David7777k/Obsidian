@@ -11,6 +11,8 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.WorldSelectionScreen;
 import net.minecraft.util.text.StringTextComponent;
 import net.mojang.blaze3d.matrix.MatrixStack;
+import org.joml.Vector2f;
+import org.joml.Vector2i;
 import org.obsidian.client.Obsidian;
 import org.obsidian.client.api.client.Constants;
 import org.obsidian.client.api.interfaces.IMinecraft;
@@ -23,8 +25,6 @@ import org.obsidian.client.utils.render.color.ColorUtil;
 import org.obsidian.client.utils.render.draw.RenderUtil;
 import org.obsidian.client.utils.render.draw.Round;
 import org.obsidian.client.utils.render.font.Fonts;
-import org.joml.Vector2f;
-import org.joml.Vector2i;
 
 import java.util.List;
 

@@ -28,7 +28,7 @@ public class EggMan extends Module {
     }
 
     // Animation mode settings
-    public final ModeSetting animationMode = new ModeSetting(this, "Режим анимации", "Яйцо", "Яйцо", "Пружина", "Размер");
+    public final ModeSetting animationMode = new ModeSetting(this, "Режим анимации", "Яйцо", "Пружина", "Размер");
 
     // Wobble mode settings (Egg mode)
     public final SliderSetting wobbleIntensity = new SliderSetting(this, "Интенсивность эффекта", 1.0f, 0.5f, 2.0f, 0.1f)
@@ -48,7 +48,7 @@ public class EggMan extends Module {
     public final BooleanSetting soundEffect = new BooleanSetting(this, "Звуковой эффект", true);
     private final SliderSetting soundVolume = new SliderSetting(this, "Громкость звука", 25, 0, 100, 1)
             .setVisible(soundEffect::getValue);
-    private final ModeSetting soundType = new ModeSetting(this, "Тип звука", "Egg", "Egg", "Boing")
+    private final ModeSetting soundType = new ModeSetting(this, "Тип звука", "Egg", "Boing")
             .setVisible(soundEffect::getValue);
 
     // Sound controllers

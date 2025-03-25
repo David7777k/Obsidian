@@ -72,4 +72,9 @@ public class DiscordRPCModule extends Module {
         System.out.println("Остановка Discord RPC...");
         discordRPC.Discord_Shutdown();
     }
+
+    @Override
+    public boolean isStarred() {
+        return true; // Звёздочка всегда отображается
+    }
 }

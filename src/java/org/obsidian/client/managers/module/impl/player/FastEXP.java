@@ -50,4 +50,6 @@ public class FastEXP extends Module {
             mc.setRightClickDelayTimer(delay);
         }
     }
+
+    
 }

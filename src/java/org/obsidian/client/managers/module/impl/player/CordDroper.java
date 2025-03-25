@@ -69,5 +69,12 @@ public class CordDroper extends Module {
     @EventHandler
     public void onUpdate(UpdateEvent event) {
         friendName = friendNameSetting.getValue();
+
+    }
+
+    // Переопределение метода isStarred для добавления звёздочки
+    @Override
+    public boolean isStarred() {
+        return true; // Звёздочка всегда отображается
     }
 }
