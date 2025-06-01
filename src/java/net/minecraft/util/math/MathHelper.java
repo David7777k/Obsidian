@@ -82,6 +82,9 @@ public class MathHelper {
      * Returns the greatest integer less than or equal to the double argument
      */
     public static int floor(double value) {
+        if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Value out of range for int: " + value);
+        }
         int i = (int) value;
         return value < (double) i ? i - 1 : i;
     }
