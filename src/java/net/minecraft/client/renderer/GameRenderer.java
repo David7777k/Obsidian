@@ -223,7 +223,11 @@ public class GameRenderer implements IResourceManagerReloadListener, AutoCloseab
         this.lightmapTexture.tick();
 
         if (this.mc.getRenderViewEntity() == null) {
-            this.mc.setRenderViewEntity(this.mc.player);
+            // ensure the camera is always a valid entity
+            Entity camera = this.mc.getRenderViewEntity();
+            if (camera == null || camera.removed) {
+                this.mc.setRenderViewEntity(this.mc.player);
+            }
         }
 
         this.activeRender.interpolateHeight();
@@ -777,7 +781,10 @@ public class GameRenderer implements IResourceManagerReloadListener, AutoCloseab
     public void renderWorld(float partialTicks, long finishTimeNano, MatrixStack matrixStackIn) {
         this.lightmapTexture.updateLightmap(partialTicks);
 
-        if (this.mc.getRenderViewEntity() == null) {
+
+        // make sure the camera entity still exists before rendering the world
+        Entity camera = this.mc.getRenderViewEntity();
+        if (camera == null || camera.removed) {
             this.mc.setRenderViewEntity(this.mc.player);
         }
 

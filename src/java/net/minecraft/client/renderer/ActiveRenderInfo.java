@@ -48,11 +48,9 @@ public class ActiveRenderInfo {
         if (!zoomActive) zoomWheel = 0.0F;
 
         float zoomValue = (zoomActive ? 4.0F : 1.0F);
-
         float to = (float) (zoomValue + zoomWheel);
         zoomAnimation.update();
         zoomAnimation.run(to, zoomActive ? 0.5F : 0.0F, Easings.SINE_OUT, true);
-
         return zoomAnimation.getValue();
     }
 
@@ -65,17 +63,26 @@ public class ActiveRenderInfo {
         RotationEvent event = new RotationEvent(renderViewEntity.getYaw(partialTicks), renderViewEntity.getPitch(partialTicks), partialTicks);
         event.hook();
 
+        // set base position and orientation
         this.setDirection(event.getYaw(), event.getPitch());
         this.setPosition(MathHelper.lerp(partialTicks, renderViewEntity.prevPosX, renderViewEntity.getPosX()), MathHelper.lerp(partialTicks, renderViewEntity.prevPosY, renderViewEntity.getPosY()) + (double) MathHelper.lerp(partialTicks, this.previousHeight, this.height), MathHelper.lerp(partialTicks, renderViewEntity.prevPosZ, renderViewEntity.getPosZ()));
         if (thirdPersonIn) {
+            // distance to offset the camera in third-person mode
+            double distance = this.getUpdatedSmoothZooming(!renderViewEntity.isSpectator());
+            distance = this.calcCameraDistance(distance);
+
             if (thirdPersonReverseIn) {
                 // calculate how far the camera should be from the player
-                double distance = this.getUpdatedSmoothZooming(!renderViewEntity.isSpectator());
+                distance = this.getUpdatedSmoothZooming(!renderViewEntity.isSpectator());
                 distance = this.calcCameraDistance(distance);
                 // shift the camera backward to render the player model
+                // front view - camera placed in front of the model
                 this.movePosition(-distance, 0.0D, 0.0D);
 
                 this.setDirection(event.getYaw() + 180.0F, -event.getPitch());
+            } else {
+                // back view - camera placed behind the model
+                this.movePosition(distance, 0.0D, 0.0D);
             }
 
         } else if (renderViewEntity instanceof LivingEntity && ((LivingEntity) renderViewEntity).isSleeping()) {
@@ -99,27 +106,26 @@ public class ActiveRenderInfo {
         CameraClipEvent event = new CameraClipEvent();
         event.hook();
         for (int i = 0; i < 8; ++i) {
-            float f = (float) ((i & 1) * 2 - 1);
-            float f1 = (float) ((i >> 1 & 1) * 2 - 1);
-            float f2 = (float) ((i >> 2 & 1) * 2 - 1);
-            f = f * 0.1F;
-            f1 = f1 * 0.1F;
-            f2 = f2 * 0.1F;
-            Vector3d vector3d = this.pos.add(f, f1, f2);
-            Vector3d vector3d1 = new Vector3d(this.pos.x - (double) this.look.getX() * startingDistance + (double) f + (double) f2, this.pos.y - (double) this.look.getY() * startingDistance + (double) f1, this.pos.z - (double) this.look.getZ() * startingDistance + (double) f2);
-            RayTraceResult raytraceresult = this.world.rayTraceBlocks(new RayTraceContext(vector3d, vector3d1, RayTraceContext.BlockMode.VISUAL, RayTraceContext.FluidMode.NONE, this.renderViewEntity));
+            float f = ((i & 1) * 2 - 1) * 0.1F;
+            float f1 = ((i >> 1 & 1) * 2 - 1) * 0.1F;
+            float f2 = ((i >> 2 & 1) * 2 - 1) * 0.1F;
+            Vector3d start = this.pos.add(f, f1, f2);
+            Vector3d end = new Vector3d(
+                    this.pos.x - this.look.getX() * startingDistance + f + f2,
+                    this.pos.y - this.look.getY() * startingDistance + f1,
+                    this.pos.z - this.look.getZ() * startingDistance + f2
+            );
+            RayTraceResult result = this.world.rayTraceBlocks(
+                    new RayTraceContext(start, end, RayTraceContext.BlockMode.VISUAL, RayTraceContext.FluidMode.NONE, this.renderViewEntity)
+            );
 
-            if (!event.isCancelled()) {
-                if (raytraceresult.getType() != RayTraceResult.Type.MISS) {
-                    double d0 = raytraceresult.getHitVec().distanceTo(this.pos);
-
-                    if (d0 < startingDistance) {
-                        startingDistance = d0;
-                    }
+            if (!event.isCancelled() && result.getType() != RayTraceResult.Type.MISS) {
+                double dist = result.getHitVec().distanceTo(this.pos);
+                if (dist < startingDistance) {
+                    startingDistance = dist;
                 }
             }
         }
-
         return startingDistance;
     }
 
@@ -127,10 +133,10 @@ public class ActiveRenderInfo {
      * Moves the render position relative to the view direction, for third person camera
      */
     protected void movePosition(double distanceOffset, double verticalOffset, double horizontalOffset) {
-        double d0 = (double) this.look.getX() * distanceOffset + (double) this.up.getX() * verticalOffset + (double) this.left.getX() * horizontalOffset;
-        double d1 = (double) this.look.getY() * distanceOffset + (double) this.up.getY() * verticalOffset + (double) this.left.getY() * horizontalOffset;
-        double d2 = (double) this.look.getZ() * distanceOffset + (double) this.up.getZ() * verticalOffset + (double) this.left.getZ() * horizontalOffset;
-        this.setPosition(new Vector3d(this.pos.x + d0, this.pos.y + d1, this.pos.z + d2));
+        double dx = this.look.getX() * distanceOffset + this.up.getX() * verticalOffset + this.left.getX() * horizontalOffset;
+        double dy = this.look.getY() * distanceOffset + this.up.getY() * verticalOffset + this.left.getY() * horizontalOffset;
+        double dz = this.look.getZ() * distanceOffset + this.up.getZ() * verticalOffset + this.left.getZ() * horizontalOffset;
+        this.setPosition(this.pos.x + dx, this.pos.y + dy, this.pos.z + dz);
     }
 
     protected void setDirection(float pitchIn, float yawIn) {
@@ -147,9 +153,6 @@ public class ActiveRenderInfo {
         this.left.transform(this.rotation);
     }
 
-    /**
-     * Sets the position and blockpos of the active render
-     */
     protected void setPosition(double x, double y, double z) {
         this.setPosition(new Vector3d(x, y, z));
     }
@@ -195,8 +198,11 @@ public class ActiveRenderInfo {
         if (!this.valid) {
             return Fluids.EMPTY.getDefaultState();
         } else {
-            FluidState fluidstate = this.world.getFluidState(this.blockPos);
-            return !fluidstate.isEmpty() && this.pos.y >= (double) ((float) this.blockPos.getY() + fluidstate.getActualHeight(this.world, this.blockPos)) ? Fluids.EMPTY.getDefaultState() : fluidstate;
+            FluidState f = this.world.getFluidState(this.blockPos);
+            if (!f.isEmpty() && this.pos.y >= this.blockPos.getY() + f.getActualHeight(this.world, this.blockPos)) {
+                return Fluids.EMPTY.getDefaultState();
+            }
+            return f;
         }
     }
 
@@ -204,23 +210,20 @@ public class ActiveRenderInfo {
         return !this.valid ? Blocks.AIR.getDefaultState() : this.world.getBlockState(this.blockPos);
     }
 
-    public void setAnglesInternal(float p_setAnglesInternal_1_, float p_setAnglesInternal_2_) {
-        this.yaw = p_setAnglesInternal_1_;
-        this.pitch = p_setAnglesInternal_2_;
+    public void setAnglesInternal(float yawIn, float pitchIn) {
+        this.yaw = yawIn;
+        this.pitch = pitchIn;
     }
 
     public BlockState getBlockAtCamera() {
         if (!this.valid) {
             return Blocks.AIR.getDefaultState();
-        } else {
-            BlockState blockstate = this.world.getBlockState(this.blockPos);
-
-            if (Reflector.IForgeBlockState_getStateAtViewpoint.exists()) {
-                blockstate = (BlockState) Reflector.call(blockstate, Reflector.IForgeBlockState_getStateAtViewpoint, this.world, this.blockPos, this.pos);
-            }
-
-            return blockstate;
         }
+        BlockState state = this.world.getBlockState(this.blockPos);
+        if (Reflector.IForgeBlockState_getStateAtViewpoint.exists()) {
+            state = (BlockState) Reflector.call(state, Reflector.IForgeBlockState_getStateAtViewpoint, this.world, this.blockPos, this.pos);
+        }
+        return state;
     }
 
     public final Vector3f getViewVector() {

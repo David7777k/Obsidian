@@ -1294,22 +1294,8 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements IWindowEv
                 this.gameRenderer.loadEntityShader(this.gameSettings.getPointOfView().firstPerson() ? this.getRenderViewEntity() : null);
             }
         }
-        // Ensure correct camera entity when switching to third person
-        if (!this.gameSettings.getPointOfView().firstPerson()) {
-            // Fallback to the player if renderViewEntity is missing or set to another entity
-            if (this.player != null && (this.getRenderViewEntity() == null || this.getRenderViewEntity() != this.player)) {
-                this.setRenderViewEntity(this.player);
-            }
+        if (this.gameSettings.getPointOfView().firstPerson()) {
 
-            // Update camera info so position and angles refresh immediately
-            if (this.world != null) {
-                this.gameRenderer.getActiveRenderInfo().update(
-                        this.world,
-                        this.getRenderViewEntity(),
-                        true,
-                        this.gameSettings.getPointOfView().thirdPersonFront(),
-                        0.0F);
-            }
         }
 
         for (int i = 0; i < 9; ++i) {
@@ -2044,13 +2030,24 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements IWindowEv
 
     @Nullable
     public Entity getRenderViewEntity() {
+        // fall back to the player if the current camera entity is null or removed
+        if (this.renderViewEntity == null || this.renderViewEntity.removed) {
+            return this.player;
+        }
+
         return this.renderViewEntity;
     }
 
     public void setRenderViewEntity(Entity viewingEntity) {
+        // avoid setting an invalid entity (null or removed) as the camera
+        if (viewingEntity == null || viewingEntity.removed) {
+            viewingEntity = this.player;
+        }
+
         this.renderViewEntity = viewingEntity;
         this.gameRenderer.loadEntityShader(viewingEntity);
     }
+
 
     public boolean isEntityGlowing(Entity entity) {
         return entity.isGlowing() || this.player != null && this.player.isSpectator() && this.gameSettings.keyBindSpectatorOutlines.isKeyDown() && entity.getType() == EntityType.PLAYER;
