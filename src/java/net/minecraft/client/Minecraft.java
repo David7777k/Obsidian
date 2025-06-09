@@ -1293,6 +1293,14 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements IWindowEv
             if (pointofview.firstPerson() != this.gameSettings.getPointOfView().firstPerson()) {
                 this.gameRenderer.loadEntityShader(this.gameSettings.getPointOfView().firstPerson() ? this.getRenderViewEntity() : null);
             }
+
+            // Ensure correct camera entity when switching to third person
+            if (!this.gameSettings.getPointOfView().firstPerson()) {
+                // Fallback to the player if renderViewEntity is missing or set to another entity
+                if (this.player != null && (this.getRenderViewEntity() == null || this.getRenderViewEntity() != this.player)) {
+                    this.setRenderViewEntity(this.player);
+                }
+            }
         }
 
         while (this.gameSettings.keyBindSmoothCamera.isPressed()) {
