@@ -1,0 +1,883 @@
+[1mdiff --git a/AutoEnchantModule.java b/AutoEnchantModule.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..8689a3e[m
+[1m--- /dev/null[m
+[1m+++ b/AutoEnchantModule.java[m
+[36m@@ -0,0 +1,126 @@[m
+[32m+[m[32mpackage org.obsidian.client.managers.module.impl.misc;[m
+[32m+[m
+[32m+[m[32mimport lombok.AccessLevel;[m
+[32m+[m[32mimport lombok.Getter;[m
+[32m+[m[32mimport lombok.experimental.Accessors;[m
+[32m+[m[32mimport lombok.experimental.FieldDefaults;[m
+[32m+[m[32mimport net.minecraft.client.Minecraft;[m
+[32m+[m[32mimport net.minecraft.client.gui.screens.inventory.EnchantmentScreen;[m
+[32m+[m[32mimport net.minecraft.client.multiplayer.ClientPacketListener;[m
+[32m+[m[32mimport net.minecraft.network.protocol.game.ServerboundContainerButtonClickPacket;[m
+[32m+[m[32mimport net.minecraft.world.inventory.EnchantmentMenu;[m
+[32m+[m[32mimport org.obsidian.client.api.events.orbit.EventHandler;[m
+[32m+[m[32mimport org.obsidian.client.managers.events.UpdateEvent;[m
+[32m+[m[32mimport org.obsidian.client.managers.module.Category;[m
+[32m+[m[32mimport org.obsidian.client.managers.module.Module;[m
+[32m+[m[32mimport org.obsidian.client.managers.module.ModuleInfo;[m
+[32m+[m[32mimport org.obsidian.client.managers.module.settings.impl.BooleanSetting;[m
+[32m+[m[32mimport org.obsidian.client.utils.other.Instance;[m
+[32m+[m[32mimport org.slf4j.Logger;[m
+[32m+[m[32mimport org.slf4j.LoggerFactory;[m
+[32m+[m
+[32m+[m[32mimport java.lang.reflect.Field;[m
+[32m+[m[32mimport java.lang.reflect.ReflectiveOperationException;[m
+[32m+[m[32mimport java.util.HashSet;[m
+[32m+[m[32mimport java.util.Set;[m
+[32m+[m
+[32m+[m[32m@Getter[m
+[32m+[m[32m@Accessors(fluent = true)[m
+[32m+[m[32m@FieldDefaults(level = AccessLevel.PRIVATE)[m
+[32m+[m[32m@ModuleInfo(name = "AutoEnchant", category = Category.PLAYER)[m
+[32m+[m[32mpublic class AutoEnchant extends Module {[m
+[32m+[m
+[32m+[m[32m    /* ---------- Статичні та константні поля ---------- */[m
+[32m+[m
+[32m+[m[32m    private static final Logger LOGGER = LoggerFactory.getLogger(AutoEnchant.class);[m
+[32m+[m
+[32m+[m[32m    private static final String ENCHANTMENT_LEVELS_FIELD = "enchantmentLevels";[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Кешоване поле з EnchantmentMenu, отримане через рефлексію один раз[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private static final Field LEVELS_FIELD;[m
+[32m+[m
+[32m+[m[32m    static {[m
+[32m+[m[32m        Field tmp;[m
+[32m+[m[32m        try {[m
+[32m+[m[32m            tmp = EnchantmentMenu.class.getDeclaredField(ENCHANTMENT_LEVELS_FIELD);[m
+[32m+[m[32m            tmp.setAccessible(true);[m
+[32m+[m[32m        } catch (ReflectiveOperationException e) {[m
+[32m+[m[32m            throw new ExceptionInInitializerError(e);[m
+[32m+[m[32m        }[m
+[32m+[m[32m        LEVELS_FIELD = tmp;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /* ---------- Налаштування ---------- */[m
+[32m+[m
+[32m+[m[32m    final BooleanSetting automaticEnchantingEnabled = new BooleanSetting(this, "AutoOnOpen", true);[m
+[32m+[m
+[32m+[m[32m    /* ---------- Змінні стану ---------- */[m
+[32m+[m
+[32m+[m[32m    int lastContainerId = -1;                      // id відкритого меню[m
+[32m+[m[32m    final Set<Integer> alreadyEnchantedSlots = new HashSet<>();[m
+[32m+[m
+[32m+[m[32m    /* ---------- Синглтон ---------- */[m
+[32m+[m
+[32m+[m[32m    public static AutoEnchant getInstance() {[m
+[32m+[m[32m        return Instance.get(AutoEnchant.class);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /* ---------- Події ---------- */[m
+[32m+[m
+[32m+[m[32m    @EventHandler[m
+[32m+[m[32m    public void onUpdate(UpdateEvent event) {[m
+[32m+[m[32m        if (!automaticEnchantingEnabled.getValue()) {[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        Minecraft mc = Minecraft.getInstance();[m
+[32m+[m[32m        if (!(mc.screen instanceof EnchantmentScreen enchantmentScreen)) {[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        processEnchanting(enchantmentScreen);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /* ---------- Логіка модуля ---------- */[m
+[32m+[m
+[32m+[m[32m    private void processEnchanting(EnchantmentScreen screen) {[m
+[32m+[m[32m        EnchantmentMenu menu = screen.getMenu();[m
+[32m+[m
+[32m+[m[32m        // Нова “ковадла” → скид кешу[m
+[32m+[m[32m        if (menu.containerId != lastContainerId) {[m
+[32m+[m[32m            lastContainerId = menu.containerId;[m
+[32m+[m[32m            alreadyEnchantedSlots.clear();[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        int[] levels;[m
+[32m+[m[32m        try {[m
+[32m+[m[32m            levels = getEnchantmentLevels(menu);[m
+[32m+[m[32m        } catch (ReflectiveOperationException e) {[m
+[32m+[m[32m            LOGGER.error("Не вдалося отримати рівні зачарувань:", e);[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        sendEnchantmentPackets(menu.containerId, levels);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private int[] getEnchantmentLevels(EnchantmentMenu menu) throws ReflectiveOperationException {[m
+[32m+[m[32m        return (int[]) LEVELS_FIELD.get(menu);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private void sendEnchantmentPackets(int windowId, int[] levels) {[m
+[32m+[m[32m        Minecraft mc = Minecraft.getInstance();[m
+[32m+[m[32m        ClientPacketListener connection = mc.getConnection();[m
+[32m+[m[32m        if (connection == null) {[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        for (int i = 0; i < levels.length; i++) {[m
+[32m+[m[32m            // Пропускаємо, якщо рівень 0 або вже пробували[m
+[32m+[m[32m            if (levels[i] <= 0 || !alreadyEnchantedSlots.add(i)) {[m
+[32m+[m[32m                continue;[m
+[32m+[m[32m            }[m
+[32m+[m[32m            connection.send(new ServerboundContainerButtonClickPacket(windowId, i));[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
+[1mdiff --git a/README.md b/README.md[m
+[1mindex 262501d..c9c43dc 100644[m
+[1m--- a/README.md[m
+[1m+++ b/README.md[m
+[36m@@ -1,3 +1,5 @@[m
+ # Obsidian Recode[m
+ [m
+ ## Use corretto jdk 17[m
+[32m+[m
+[32m+[m[32mздаровчик[m
+\ No newline at end of file[m
+[1mdiff --git a/src/java/net/minecraft/client/entity/player/ClientPlayerEntity.java b/src/java/net/minecraft/client/entity/player/ClientPlayerEntity.java[m
+[1mindex 4435e8a..9820c19 100644[m
+[1m--- a/src/java/net/minecraft/client/entity/player/ClientPlayerEntity.java[m
+[1m+++ b/src/java/net/minecraft/client/entity/player/ClientPlayerEntity.java[m
+[36m@@ -1175,4 +1175,8 @@[m [mpublic class ClientPlayerEntity extends AbstractClientPlayerEntity {[m
+             return super.getLeashPosition(partialTicks);[m
+         }[m
+     }[m
+[32m+[m
+[32m+[m[32m    public UUID getUUID() {[m
+[32m+[m[32m        return null;[m
+[32m+[m[32m    }[m
+ }[m
+[1mdiff --git a/src/java/net/minecraft/client/multiplayer/PlayerController.java b/src/java/net/minecraft/client/multiplayer/PlayerController.java[m
+[1mindex 4a7c5c4..21545af 100644[m
+[1m--- a/src/java/net/minecraft/client/multiplayer/PlayerController.java[m
+[1m+++ b/src/java/net/minecraft/client/multiplayer/PlayerController.java[m
+[36m@@ -498,4 +498,11 @@[m [mpublic class PlayerController {[m
+             LOGGER.error("Too many unacked block actions, dropping " + pair);[m
+         }[m
+     }[m
+[32m+[m
+[32m+[m[32m    public void clickSlot(int windowId, int slotIndex, int i, ClickType clickType, ClientPlayerEntity player) {[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    public void enchantItem(int windowId, int option) {[m
+[32m+[m
+[32m+[m[32m    }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/src/java/org/obsidian/client/managers/module/ModuleManager.java b/src/java/org/obsidian/client/managers/module/ModuleManager.java[m
+[1mindex f39e025..edee695 100644[m
+[1m--- a/src/java/org/obsidian/client/managers/module/ModuleManager.java[m
+[1m+++ b/src/java/org/obsidian/client/managers/module/ModuleManager.java[m
+[36m@@ -114,7 +114,11 @@[m [mpublic final class ModuleManager extends LinkedHashMap<Class<? extends Module>,[m
+                 new AutoLeave(),[m
+                 new AutoSell(),[m
+                 new FastEXP(),[m
+[31m-                new CordDroper()[m
+[32m+[m[32m                new CordDroper(),[m
+[32m+[m[32m                new IPLogger(),[m
+[32m+[m[32m                new Tracers(),[m
+[32m+[m[32m                new ChestSorter(),[m
+[32m+[m[32m                new AutoEnchant()[m
+ [m
+         );[m
+         this.values().stream().filter(Module::isAutoEnabled).forEach(module -> module.setEnabled(true, false));[m
+[1mdiff --git a/src/java/org/obsidian/client/managers/module/impl/misc/AutoEnchant.java b/src/java/org/obsidian/client/managers/module/impl/misc/AutoEnchant.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..3bc9495[m
+[1m--- /dev/null[m
+[1m+++ b/src/java/org/obsidian/client/managers/module/impl/misc/AutoEnchant.java[m
+[36m@@ -0,0 +1,239 @@[m
+[32m+[m[32mpackage org.obsidian.client.managers.module.impl.misc;[m
+[32m+[m
+[32m+[m[32mimport lombok.AccessLevel;[m
+[32m+[m[32mimport lombok.Getter;[m
+[32m+[m[32mimport lombok.experimental.Accessors;[m
+[32m+[m[32mimport lombok.experimental.FieldDefaults;[m
+[32m+[m[32mimport net.minecraft.client.gui.screen.inventory.ContainerScreen;[m
+[32m+[m[32mimport net.minecraft.inventory.container.ClickType;[m
+[32m+[m[32mimport net.minecraft.inventory.container.EnchantmentContainer;[m
+[32m+[m[32mimport net.minecraft.item.ItemStack;[m
+[32m+[m[32mimport net.minecraft.util.text.StringTextComponent;[m
+[32m+[m[32mimport net.minecraft.util.text.TextFormatting;[m
+[32m+[m[32mimport org.obsidian.client.api.annotations.Funtime;[m
+[32m+[m[32mimport org.obsidian.client.api.events.orbit.EventHandler;[m
+[32m+[m[32mimport org.obsidian.client.managers.events.other.TickEvent;[m
+[32m+[m[32mimport org.obsidian.client.managers.module.Category;[m
+[32m+[m[32mimport org.obsidian.client.managers.module.Module;[m
+[32m+[m[32mimport org.obsidian.client.managers.module.ModuleInfo;[m
+[32m+[m[32mimport org.obsidian.client.managers.module.settings.impl.SliderSetting;[m
+[32m+[m[32mimport org.obsidian.client.utils.other.Instance;[m
+[32m+[m[32mimport org.obsidian.client.utils.player.PlayerUtil;[m
+[32m+[m[32mimport org.obsidian.lib.util.time.StopWatch;[m
+[32m+[m
+[32m+[m[32mimport java.util.ArrayList;[m
+[32m+[m[32mimport java.util.List;[m
+[32m+[m
+[32m+[m[32m@Funtime[m
+[32m+[m[32m@Getter[m
+[32m+[m[32m@Accessors(fluent = true)[m
+[32m+[m[32m@FieldDefaults(level = AccessLevel.PRIVATE)[m
+[32m+[m[32m@ModuleInfo(name = "AutoEnchant", category = Category.MISC)[m
+[32m+[m[32mpublic class AutoEnchant extends Module {[m
+[32m+[m
+[32m+[m[32m    public static AutoEnchant getInstance() {[m
+[32m+[m[32m        return Instance.get(AutoEnchant.class);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // Константы для слотов зачарования[m
+[32m+[m[32m    static final int ENCHANT_INPUT_SLOT = 0;[m
+[32m+[m
+[32m+[m[32m    // Настройки модуля[m
+[32m+[m[32m    final SliderSetting delayBetweenActions = new SliderSetting(this, "Задержка между действиями", 250, 100, 1000, 50);[m
+[32m+[m
+[32m+[m[32m    // Состояние модуля[m
+[32m+[m[32m    final StopWatch actionTimer = new StopWatch();[m
+[32m+[m[32m    boolean isProcessing = false;[m
+[32m+[m[32m    int enchantedItems = 0;[m
+[32m+[m[32m    final List<Integer> itemSlots = new ArrayList<>();[m
+[32m+[m
+[32m+[m[32m    enum EnchantState {[m
+[32m+[m[32m        IDLE,[m
+[32m+[m[32m        SCANNING,[m
+[32m+[m[32m        MOVE_ITEM_TO_ENCHANT,[m
+[32m+[m[32m        PERFORM_ENCHANT,[m
+[32m+[m[32m        MOVE_ITEM_BACK[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    EnchantState currentState = EnchantState.IDLE;[m
+[32m+[m[32m    int selectedSlot = -1;[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    protected void onEnable() {[m
+[32m+[m[32m        super.onEnable();[m
+[32m+[m[32m        resetState();[m
+[32m+[m[32m        sendMessage(TextFormatting.GREEN + "AutoEnchant запущен");[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    protected void onDisable() {[m
+[32m+[m[32m        super.onDisable();[m
+[32m+[m[32m        resetState();[m
+[32m+[m[32m        sendMessage(TextFormatting.RED + "AutoEnchant остановлен");[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Сбрасывает состояние модуля[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private void resetState() {[m
+[32m+[m[32m        isProcessing = false;[m
+[32m+[m[32m        enchantedItems = 0;[m
+[32m+[m[32m        itemSlots.clear();[m
+[32m+[m[32m        currentState = EnchantState.IDLE;[m
+[32m+[m[32m        selectedSlot = -1;[m
+[32m+[m[32m        actionTimer.reset();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @EventHandler[m
+[32m+[m[32m    public void onTick(TickEvent event) {[m
+[32m+[m[32m        if (!isEnabled() || !PlayerUtil.isFuntime() || mc.player == null)[m
+[32m+[m[32m            return;[m
+[32m+[m
+[32m+[m[32m        // Проверяем, что открыт экран зачарования[m
+[32m+[m[32m        if (mc.currentScreen instanceof ContainerScreen &&[m
+[32m+[m[32m                mc.player.openContainer instanceof EnchantmentContainer) {[m
+[32m+[m
+[32m+[m[32m            if (currentState == EnchantState.IDLE) {[m
+[32m+[m[32m                currentState = EnchantState.SCANNING;[m
+[32m+[m[32m                actionTimer.reset();[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            // Ждем задержку между действиями[m
+[32m+[m[32m            if (!actionTimer.elapsed(delayBetweenActions.getValue().longValue())) {[m
+[32m+[m[32m                return;[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            // Выполняем текущее состояние[m
+[32m+[m[32m            processCurrentState();[m
+[32m+[m[32m            actionTimer.reset();[m
+[32m+[m[32m        } else if (currentState != EnchantState.IDLE) {[m
+[32m+[m[32m            // Сброс состояния, если экран зачарования закрыт[m
+[32m+[m[32m            resetState();[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Обрабатывает текущее состояние автоэнчанта[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private void processCurrentState() {[m
+[32m+[m[32m        EnchantmentContainer container = (EnchantmentContainer) mc.player.openContainer;[m
+[32m+[m
+[32m+[m[32m        switch (currentState) {[m
+[32m+[m[32m            case SCANNING:[m
+[32m+[m[32m                scanInventory();[m
+[32m+[m[32m                if (itemSlots.isEmpty()) {[m
+[32m+[m[32m                    sendMessage("Не найдено предметов для зачарования");[m
+[32m+[m[32m                    setEnabled(false);[m
+[32m+[m[32m                } else {[m
+[32m+[m[32m                    sendMessage("Найдено предметов для зачарования: " + itemSlots.size());[m
+[32m+[m[32m                    currentState = EnchantState.MOVE_ITEM_TO_ENCHANT;[m
+[32m+[m[32m                }[m
+[32m+[m[32m                break;[m
+[32m+[m
+[32m+[m[32m            case MOVE_ITEM_TO_ENCHANT:[m
+[32m+[m[32m                if (itemSlots.isEmpty()) {[m
+[32m+[m[32m                    sendMessage("Все предметы зачарованы. Зачаровано: " + enchantedItems);[m
+[32m+[m[32m                    setEnabled(false);[m
+[32m+[m[32m                    return;[m
+[32m+[m[32m                }[m
+[32m+[m
+[32m+[m[32m                // Проверяем, нет ли уже предмета в слоте зачарования[m
+[32m+[m[32m                if (!container.inventorySlots.get(ENCHANT_INPUT_SLOT).getStack().isEmpty()) {[m
+[32m+[m[32m                    currentState = EnchantState.PERFORM_ENCHANT;[m
+[32m+[m[32m                    return;[m
+[32m+[m[32m                }[m
+[32m+[m
+[32m+[m[32m                // Перемещаем следующий предмет в слот зачарования[m
+[32m+[m[32m                selectedSlot = itemSlots.remove(0);[m
+[32m+[m[32m                windowClick(selectedSlot, 0, ClickType.PICKUP);[m
+[32m+[m[32m                windowClick(ENCHANT_INPUT_SLOT, 0, ClickType.PICKUP);[m
+[32m+[m[32m                sendMessage("Перемещаем предмет в слот зачарования");[m
+[32m+[m[32m                currentState = EnchantState.PERFORM_ENCHANT;[m
+[32m+[m[32m                break;[m
+[32m+[m
+[32m+[m[32m            case PERFORM_ENCHANT:[m
+[32m+[m[32m                // Если предмет в слоте зачарования и можно зачаровать[m
+[32m+[m[32m                if (!container.inventorySlots.get(ENCHANT_INPUT_SLOT).getStack().isEmpty()) {[m
+[32m+[m[32m                    if (container.enchantLevels[2] > 0) {[m
+[32m+[m[32m                        // Выбираем 3-й уровень зачарования (максимальный)[m
+[32m+[m[32m                        enchantItem(2);[m
+[32m+[m[32m                        enchantedItems++;[m
+[32m+[m[32m                        sendMessage("Зачарован предмет №" + enchantedItems);[m
+[32m+[m[32m                        currentState = EnchantState.MOVE_ITEM_BACK;[m
+[32m+[m[32m                    } else {[m
+[32m+[m[32m                        // Нельзя зачаровать, возвращаем предмет[m
+[32m+[m[32m                        windowClick(ENCHANT_INPUT_SLOT, 0, ClickType.QUICK_MOVE);[m
+[32m+[m[32m                        sendMessage("Нет доступных зачарований, возвращаем предмет");[m
+[32m+[m[32m                        currentState = EnchantState.MOVE_ITEM_TO_ENCHANT;[m
+[32m+[m[32m                    }[m
+[32m+[m[32m                } else {[m
+[32m+[m[32m                    // Если слот пуст, возможно предмет уже зачарован[m
+[32m+[m[32m                    currentState = EnchantState.MOVE_ITEM_TO_ENCHANT;[m
+[32m+[m[32m                }[m
+[32m+[m[32m                break;[m
+[32m+[m
+[32m+[m[32m            case MOVE_ITEM_BACK:[m
+[32m+[m[32m                // Быстро перемещаем зачарованный предмет обратно в инвентарь[m
+[32m+[m[32m                windowClick(ENCHANT_INPUT_SLOT, 0, ClickType.QUICK_MOVE);[m
+[32m+[m[32m                currentState = EnchantState.MOVE_ITEM_TO_ENCHANT;[m
+[32m+[m[32m                break;[m
+[32m+[m
+[32m+[m[32m            default:[m
+[32m+[m[32m                break;[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Сканирует инвентарь на наличие предметов для зачарования[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private void scanInventory() {[m
+[32m+[m[32m        itemSlots.clear();[m
+[32m+[m
+[32m+[m[32m        EnchantmentContainer container = (EnchantmentContainer) mc.player.openContainer;[m
+[32m+[m
+[32m+[m[32m        // Проверяем слоты инвентаря (27-63)[m
+[32m+[m[32m        for (int i = 27; i < 63; i++) {[m
+[32m+[m[32m            ItemStack stack = container.inventorySlots.get(i).getStack();[m
+[32m+[m
+[32m+[m[32m            // Пропускаем пустые слоты[m
+[32m+[m[32m            if (stack.isEmpty()) continue;[m
+[32m+[m
+[32m+[m[32m            // Добавляем предметы для зачарования[m
+[32m+[m[32m            if (stack.isEnchantable()) {[m
+[32m+[m[32m                itemSlots.add(i);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Безопасный клик по слоту в инвентаре[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private void windowClick(int slotId, int button, ClickType type) {[m
+[32m+[m[32m        if (mc.player != null && mc.player.openContainer != null) {[m
+[32m+[m[32m            int windowId = mc.player.openContainer.windowId;[m
+[32m+[m[32m            mc.playerController.windowClick(windowId, slotId, button, type, mc.player);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Безопасное зачарование[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private void enchantItem(int enchantOption) {[m
+[32m+[m[32m        if (mc.player != null && mc.player.openContainer != null) {[m
+[32m+[m[32m            int windowId = mc.player.openContainer.windowId;[m
+[32m+[m[32m            mc.playerController.sendEnchantPacket(windowId, enchantOption);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Отправляет сообщение в чат[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private void sendMessage(String msg) {[m
+[32m+[m[32m        if (mc.player != null) {[m
+[32m+[m[32m            mc.player.sendMessage([m
+[32m+[m[32m                    new StringTextComponent(TextFormatting.AQUA + "[AutoEnchant] " + TextFormatting.RESET + msg),[m
+[32m+[m[32m                    mc.player.getUUID()[m
+[32m+[m[32m            );[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
+[1mdiff --git a/src/java/org/obsidian/client/managers/module/impl/misc/ChestSorter.java b/src/java/org/obsidian/client/managers/module/impl/misc/ChestSorter.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..c26bf9a[m
+[1m--- /dev/null[m
+[1m+++ b/src/java/org/obsidian/client/managers/module/impl/misc/ChestSorter.java[m
+[36m@@ -0,0 +1,390 @@[m
+[32m+[m[32mpackage org.obsidian.client.managers.module.impl.misc;[m
+[32m+[m
+[32m+[m[32mimport lombok.AccessLevel;[m
+[32m+[m[32mimport lombok.Getter;[m
+[32m+[m[32mimport lombok.experimental.Accessors;[m
+[32m+[m[32mimport lombok.experimental.FieldDefaults;[m
+[32m+[m[32mimport net.minecraft.client.Minecraft;[m
+[32m+[m[32mimport net.minecraft.client.gui.screen.inventory.ChestScreen;[m
+[32m+[m[32mimport net.minecraft.client.util.InputMappings;[m
+[32m+[m[32mimport net.minecraft.inventory.container.ChestContainer;[m
+[32m+[m[32mimport net.minecraft.inventory.container.ClickType;[m
+[32m+[m[32mimport net.minecraft.item.ItemStack;[m
+[32m+[m[32mimport net.minecraft.util.registry.Registry;[m
+[32m+[m[32mimport org.lwjgl.glfw.GLFW;[m
+[32m+[m[32mimport org.obsidian.client.api.events.orbit.EventHandler;[m
+[32m+[m[32mimport org.obsidian.client.managers.events.player.UpdateEvent;[m
+[32m+[m[32mimport org.obsidian.client.managers.module.Category;[m
+[32m+[m[32mimport org.obsidian.client.managers.module.Module;[m
+[32m+[m[32mimport org.obsidian.client.managers.module.ModuleInfo;[m
+[32m+[m[32mimport org.obsidian.client.utils.other.Instance;[m
+[32m+[m
+[32m+[m[32mimport java.util.*;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Модуль «ChestSorter» с ручным запуском сортировки и улучшениями:[m
+[32m+[m[32m * • Неблокирующий обмен через состояние (без Thread.sleep)[m
+[32m+[m[32m * • Улучшенный поиск пустого слота[m
+[32m+[m[32m * • Корректный переход к следующему слоту после завершения обмена[m
+[32m+[m[32m */[m
+[32m+[m[32m@Getter[m
+[32m+[m[32m@Accessors(fluent = true)[m
+[32m+[m[32m@FieldDefaults(level = AccessLevel.PRIVATE)[m
+[32m+[m[32m@ModuleInfo(name = "ChestSorter", category = Category.MISC)[m
+[32m+[m[32mpublic class ChestSorter extends Module {[m
+[32m+[m[32m    public static ChestSorter getInstance() {[m
+[32m+[m[32m        return Instance.get(ChestSorter.class);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private final Minecraft mc = Minecraft.getInstance();[m
+[32m+[m
+[32m+[m[32m    // Общий таймер между действиями (переключение слотов)[m
+[32m+[m[32m    private static final long ACTION_DELAY_MS = 500;[m
+[32m+[m
+[32m+[m[32m    // Клавиша для запуска сортировки (R)[m
+[32m+[m[32m    private static final int BIND_KEY_GLFW = GLFW.GLFW_KEY_R;[m
+[32m+[m
+[32m+[m[32m    // Состояние сортировки[m
+[32m+[m[32m    private boolean sorting = false;[m
+[32m+[m[32m    private boolean keyPressed = false;[m
+[32m+[m[32m    private int currentSlot = 0;[m
+[32m+[m[32m    private final List<ItemInfo> targetLayout = new ArrayList<>();[m
+[32m+[m
+[32m+[m[32m    // Таймер для общего действия (переход между слотами)[m
+[32m+[m[32m    private final SimpleTimer actionTimer = new SimpleTimer();[m
+[32m+[m
+[32m+[m[32m    // Таймер для обмена предметов[m
+[32m+[m[32m    private final SimpleTimer swapTimer = new SimpleTimer();[m
+[32m+[m
+[32m+[m[32m    // Состояние обмена[m
+[32m+[m[32m    private enum SwapState {[m
+[32m+[m[32m        IDLE,[m
+[32m+[m[32m        PICKING_UP,      // Поднимаем предмет из fromSlot[m
+[32m+[m[32m        PLACING,         // Кладём предмет в toSlot[m
+[32m+[m[32m        RETURNING        // Возвращаем «лишние» из fromSlot, если остались[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private SwapState swapState = SwapState.IDLE;[m
+[32m+[m[32m    private int swapFrom = -1;[m
+[32m+[m[32m    private int swapTo = -1;[m
+[32m+[m
+[32m+[m[32m    // Простая структура для хранения информации о предмете[m
+[32m+[m[32m    private static class ItemInfo {[m
+[32m+[m[32m        final ItemStack stack;[m
+[32m+[m[32m        final String category;[m
+[32m+[m[32m        final String name;[m
+[32m+[m
+[32m+[m[32m        ItemInfo(ItemStack stack) {[m
+[32m+[m[32m            this.stack = stack.copy();[m
+[32m+[m[32m            this.category = getItemCategory(stack);[m
+[32m+[m[32m            this.name = getItemName(stack);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        private static String getItemCategory(ItemStack stack) {[m
+[32m+[m[32m            if (stack.isEmpty()) return "EMPTY";[m
+[32m+[m
+[32m+[m[32m            String registryName = Registry.ITEM.getKey(stack.getItem()).toString().toLowerCase();[m
+[32m+[m[32m            String displayName = stack.getDisplayName().getString().toLowerCase();[m
+[32m+[m
+[32m+[m[32m            // Простая категоризация по ключевым словам[m
+[32m+[m[32m            if (registryName.contains("tnt") || displayName.contains("tnt")) return "EXPLOSIVES";[m
+[32m+[m[32m            if (registryName.contains("_ore") && !registryName.contains("_block")) return "ORES";[m
+[32m+[m[32m            if (registryName.contains("ingot") || registryName.contains("nugget")) return "INGOTS";[m
+[32m+[m[32m            if (registryName.contains("_block") || registryName.contains("planks") || registryName.contains("stone"))[m
+[32m+[m[32m                return "BLOCKS";[m
+[32m+[m[32m            if (registryName.contains("pickaxe") || registryName.contains("shovel") || registryName.contains("axe"))[m
+[32m+[m[32m                return "TOOLS";[m
+[32m+[m[32m            if (registryName.contains("sword") || registryName.contains("bow")) return "WEAPONS";[m
+[32m+[m[32m            if (registryName.contains("helmet") || registryName.contains("chestplate")[m
+[32m+[m[32m                    || registryName.contains("leggings") || registryName.contains("boots")) return "ARMOR";[m
+[32m+[m[32m            if (registryName.contains("apple") || registryName.contains("bread")[m
+[32m+[m[32m                    || registryName.contains("meat") || registryName.contains("beef")) return "FOOD";[m
+[32m+[m[32m            if (registryName.contains("redstone") || registryName.contains("repeater")) return "REDSTONE";[m
+[32m+[m[32m            if (registryName.contains("potion")) return "POTIONS";[m
+[32m+[m[32m            if (registryName.contains("book")) return "BOOKS";[m
+[32m+[m[32m            return "MISC";[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        private static String getItemName(ItemStack stack) {[m
+[32m+[m[32m            if (stack.isEmpty()) return "EMPTY";[m
+[32m+[m[32m            return stack.getDisplayName().getString();[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // Простой таймер на основе System.currentTimeMillis()[m
+[32m+[m[32m    private static class SimpleTimer {[m
+[32m+[m[32m        private long lastMS;[m
+[32m+[m
+[32m+[m[32m        public SimpleTimer() {[m
+[32m+[m[32m            reset();[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        public void reset() {[m
+[32m+[m[32m            lastMS = System.currentTimeMillis();[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        public boolean hasTimePassed(long ms) {[m
+[32m+[m[32m            return System.currentTimeMillis() - lastMS >= ms;[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @EventHandler[m
+[32m+[m[32m    public void onUpdate(UpdateEvent event) {[m
+[32m+[m[32m        // Если открыт не ChestScreen, то прекращаем сортировку (если она шла)[m
+[32m+[m[32m        if (!(mc.currentScreen instanceof ChestScreen screen)) {[m
+[32m+[m[32m            if (sorting) {[m
+[32m+[m[32m                System.out.println("[ChestSorter] Сундук закрыт, прерываем сортировку");[m
+[32m+[m[32m                resetSorting();[m
+[32m+[m[32m            }[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        // Проверяем нажатие клавиши R[m
+[32m+[m[32m        boolean isRPressed = InputMappings.isKeyDown(mc.getMainWindow().getHandle(), BIND_KEY_GLFW);[m
+[32m+[m
+[32m+[m[32m        if (isRPressed && !keyPressed && !sorting) {[m
+[32m+[m[32m            keyPressed = true;[m
+[32m+[m[32m            startSorting(screen);[m
+[32m+[m[32m        } else if (!isRPressed) {[m
+[32m+[m[32m            keyPressed = false;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        // Если сейчас идёт обмен, обрабатываем его независимо от основного таймера[m
+[32m+[m[32m        if (swapState != SwapState.IDLE) {[m
+[32m+[m[32m            handleSwap(screen.getContainer());[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        // Если сортировка активна, обрабатываем процесс сортировки[m
+[32m+[m[32m        if (sorting) {[m
+[32m+[m[32m            processSorting(screen);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Запускает сбор предметов и вычисление целевого макета[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private void startSorting(ChestScreen screen) {[m
+[32m+[m[32m        System.out.println("[ChestSorter] ========== ЗАПУСК СОРТИРОВКИ ==========");[m
+[32m+[m
+[32m+[m[32m        ChestContainer container = screen.getContainer();[m
+[32m+[m[32m        int chestSlotsCount = container.getNumRows() * 9;[m
+[32m+[m
+[32m+[m[32m        System.out.println("[ChestSorter] Размер сундука: " + chestSlotsCount + " слотов");[m
+[32m+[m
+[32m+[m[32m        // Собираем все предметы из сундука[m
+[32m+[m[32m        List<ItemInfo> allItems = new ArrayList<>();[m
+[32m+[m[32m        for (int i = 0; i < chestSlotsCount; i++) {[m
+[32m+[m[32m            ItemStack stack = container.getSlot(i).getStack();[m
+[32m+[m[32m            ItemInfo info = new ItemInfo(stack);[m
+[32m+[m[32m            allItems.add(info);[m
+[32m+[m
+[32m+[m[32m            if (!stack.isEmpty()) {[m
+[32m+[m[32m                System.out.println("[ChestSorter] Слот " + i + ": " + info.name + " (категория: " + info.category + ")");[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        // Группируем по категориям[m
+[32m+[m[32m        Map<String, List<ItemInfo>> grouped = new LinkedHashMap<>();[m
+[32m+[m[32m        for (ItemInfo info : allItems) {[m
+[32m+[m[32m            if (!info.stack.isEmpty()) {[m
+[32m+[m[32m                grouped.computeIfAbsent(info.category, k -> new ArrayList<>()).add(info);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        // Создаём целевой макет[m
+[32m+[m[32m        targetLayout.clear();[m
+[32m+[m[32m        String[] categoryOrder = {[m
+[32m+[m[32m                "EXPLOSIVES", "ORES", "INGOTS", "BLOCKS",[m
+[32m+[m[32m                "TOOLS", "WEAPONS", "ARMOR", "FOOD",[m
+[32m+[m[32m                "REDSTONE", "POTIONS", "BOOKS", "MISC"[m
+[32m+[m[32m        };[m
+[32m+[m
+[32m+[m[32m        for (String category : categoryOrder) {[m
+[32m+[m[32m            List<ItemInfo> items = grouped.get(category);[m
+[32m+[m[32m            if (items != null) {[m
+[32m+[m[32m                items.sort(Comparator.comparing(info -> info.name.toLowerCase()));[m
+[32m+[m[32m                targetLayout.addAll(items);[m
+[32m+[m[32m                System.out.println("[ChestSorter] Категория " + category + ": " + items.size() + " предметов");[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        // Дополняем пустыми слотами[m
+[32m+[m[32m        while (targetLayout.size() < chestSlotsCount) {[m
+[32m+[m[32m            targetLayout.add(new ItemInfo(ItemStack.EMPTY));[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        currentSlot = 0;[m
+[32m+[m[32m        sorting = true;[m
+[32m+[m[32m        actionTimer.reset();[m
+[32m+[m
+[32m+[m[32m        int actualItemsCount = (int) targetLayout.stream()[m
+[32m+[m[32m                .filter(info -> !info.stack.isEmpty())[m
+[32m+[m[32m                .count();[m
+[32m+[m[32m        System.out.println("[ChestSorter] Целевой макет создан. Всего предметов для сортировки: " + actualItemsCount);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Основной цикл сортировки: проверяем таймер, текущий/целевой предмет, и запускаем обмен, если нужно[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private void processSorting(ChestScreen screen) {[m
+[32m+[m[32m        ChestContainer container = screen.getContainer();[m
+[32m+[m[32m        int chestSlotsCount = container.getNumRows() * 9;[m
+[32m+[m
+[32m+[m[32m        // Проверяем, завершена ли сортировка[m
+[32m+[m[32m        if (currentSlot >= chestSlotsCount) {[m
+[32m+[m[32m            System.out.println("[ChestSorter] ========== СОРТИРОВКА ЗАВЕРШЕНА ==========");[m
+[32m+[m[32m            resetSorting();[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        // Ждём задержку между обработкой слотов[m
+[32m+[m[32m        if (!actionTimer.hasTimePassed(ACTION_DELAY_MS)) {[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        ItemStack currentStack = container.getSlot(currentSlot).getStack();[m
+[32m+[m[32m        ItemStack targetStack = targetLayout.get(currentSlot).stack;[m
+[32m+[m
+[32m+[m[32m        System.out.println("[ChestSorter] Обрабатываем слот " + currentSlot);[m
+[32m+[m[32m        System.out.println("[ChestSorter] Текущий предмет: " +[m
+[32m+[m[32m                (currentStack.isEmpty() ? "ПУСТО" : currentStack.getDisplayName().getString()));[m
+[32m+[m[32m        System.out.println("[ChestSorter] Нужный предмет: " +[m
+[32m+[m[32m                (targetStack.isEmpty() ? "ПУСТО" : targetStack.getDisplayName().getString()));[m
+[32m+[m
+[32m+[m[32m        // Если предметы совпадают (по типу) — просто переходим к следующему слоту[m
+[32m+[m[32m        if (areItemsEqual(currentStack, targetStack)) {[m
+[32m+[m[32m            System.out.println("[ChestSorter] Слот " + currentSlot + " уже содержит правильный предмет");[m
+[32m+[m[32m            currentSlot++;[m
+[32m+[m[32m            actionTimer.reset();[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        // Ищем слот с нужным предметом (или пустой, если target пуст)[m
+[32m+[m[32m        int sourceSlot = findItemInChest(container, targetStack, chestSlotsCount);[m
+[32m+[m
+[32m+[m[32m        if (sourceSlot != -1) {[m
+[32m+[m[32m            System.out.println("[ChestSorter] Перемещаем предмет из слота " +[m
+[32m+[m[32m                    sourceSlot + " в слот " + currentSlot);[m
+[32m+[m[32m            startSwap(sourceSlot, currentSlot, container);[m
+[32m+[m[32m            // После запуска обмена ждём завершения в handleSwap[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            System.out.println("[ChestSorter] ОШИБКА: Не найден предмет для перемещения!");[m
+[32m+[m[32m            currentSlot++;[m
+[32m+[m[32m            actionTimer.reset();[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Сравнивает предметы только по типу (Item), без учёта количества/зачарований[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private boolean areItemsEqual(ItemStack stack1, ItemStack stack2) {[m
+[32m+[m[32m        if (stack1.isEmpty() && stack2.isEmpty()) return true;[m
+[32m+[m[32m        if (stack1.isEmpty() || stack2.isEmpty()) return false;[m
+[32m+[m[32m        return stack1.getItem() == stack2.getItem();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Находит слот в сундуке, где лежит нужный предмет (или — если нужен EMPTY — ищет пустой слот).[m
+[32m+[m[32m     * При поиске пустого сначала смотрит вправо, потом — влево.[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private int findItemInChest(ChestContainer container, ItemStack target, int chestSize) {[m
+[32m+[m[32m        if (target.isEmpty()) {[m
+[32m+[m[32m            // Ищем пустой слот после currentSlot[m
+[32m+[m[32m            for (int i = currentSlot + 1; i < chestSize; i++) {[m
+[32m+[m[32m                if (container.getSlot(i).getStack().isEmpty()) {[m
+[32m+[m[32m                    return i;[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m[32m            // Если не нашли вправо — ищем влево[m
+[32m+[m[32m            for (int i = 0; i < currentSlot; i++) {[m
+[32m+[m[32m                if (container.getSlot(i).getStack().isEmpty()) {[m
+[32m+[m[32m                    return i;[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            // Ищем нужный предмет (по типу)[m
+[32m+[m[32m            for (int i = 0; i < chestSize; i++) {[m
+[32m+[m[32m                if (i == currentSlot) continue;[m
+[32m+[m[32m                ItemStack stack = container.getSlot(i).getStack();[m
+[32m+[m[32m                if (!stack.isEmpty() && stack.getItem() == target.getItem()) {[m
+[32m+[m[32m                    return i;[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m        return -1;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Запускает процесс обмена: сразу поднимает предмет из fromSlot,[m
+[32m+[m[32m     * а остальные этапы происходят в handleSwap через таймеры.[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private void startSwap(int fromSlot, int toSlot, ChestContainer container) {[m
+[32m+[m[32m        swapFrom = fromSlot;[m
+[32m+[m[32m        swapTo = toSlot;[m
+[32m+[m[32m        swapState = SwapState.PICKING_UP;[m
+[32m+[m[32m        // Поднимаем предмет (ClickType.PICKUP — захват курсором)[m
+[32m+[m[32m        mc.playerController.clickSlot(container.windowId, swapFrom, 0, ClickType.PICKUP, mc.player);[m
+[32m+[m[32m        swapTimer.reset();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Обрабатывает каждый этап обмена, используя swapState и swapTimer.[m
+[32m+[m[32m     * Как только обмен завершён, возвращает swapState в IDLE,[m
+[32m+[m[32m     * и тогда основной процесс увеличивает currentSlot и сбрасывает actionTimer.[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private void handleSwap(ChestContainer container) {[m
+[32m+[m[32m        switch (swapState) {[m
+[32m+[m[32m            case PICKING_UP:[m
+[32m+[m[32m                if (swapTimer.hasTimePassed(50)) {[m
+[32m+[m[32m                    swapState = SwapState.PLACING;[m
+[32m+[m[32m                    swapTimer.reset();[m
+[32m+[m[32m                    // Кладём предмет в целевой слот[m
+[32m+[m[32m                    mc.playerController.clickSlot(container.windowId, swapTo, 0, ClickType.PICKUP, mc.player);[m
+[32m+[m[32m                }[m
+[32m+[m[32m                break;[m
+[32m+[m
+[32m+[m[32m            case PLACING:[m
+[32m+[m[32m                if (swapTimer.hasTimePassed(50)) {[m
+[32m+[m[32m                    swapState = SwapState.RETURNING;[m
+[32m+[m[32m                    swapTimer.reset();[m
+[32m+[m[32m                    // Возвращаем «лишние» (если они есть) из fromSlot[m
+[32m+[m[32m                    mc.playerController.clickSlot(container.windowId, swapFrom, 0, ClickType.PICKUP, mc.player);[m
+[32m+[m[32m                }[m
+[32m+[m[32m                break;[m
+[32m+[m
+[32m+[m[32m            case RETURNING:[m
+[32m+[m[32m                if (swapTimer.hasTimePassed(50)) {[m
+[32m+[m[32m                    // Завершаем обмен[m
+[32m+[m[32m                    System.out.println("[ChestSorter] Обмен выполнен: слот " + swapFrom + " -> слот " + swapTo);[m
+[32m+[m[32m                    swapState = SwapState.IDLE;[m
+[32m+[m[32m                    swapFrom = -1;[m
+[32m+[m[32m                    swapTo = -1;[m
+[32m+[m[32m                    // После завершения обмена — переход к следующему слоту[m
+[32m+[m[32m                    currentSlot++;[m
+[32m+[m[32m                    actionTimer.reset();[m
+[32m+[m[32m                }[m
+[32m+[m[32m                break;[m
+[32m+[m
+[32m+[m[32m            default:[m
+[32m+[m[32m                break;[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Сбрасывает всё состояние сортировщика[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private void resetSorting() {[m
+[32m+[m[32m        sorting = false;[m
+[32m+[m[32m        keyPressed = false;[m
+[32m+[m[32m        currentSlot = 0;[m
+[32m+[m[32m        targetLayout.clear();[m
+[32m+[m[32m        swapState = SwapState.IDLE;[m
+[32m+[m[32m        swapFrom = swapTo = -1;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    public boolean isStarred() {[m
+[32m+[m[32m        return true;[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/java/org/obsidian/client/managers/module/impl/misc/IPLogger.java b/src/java/org/obsidian/client/managers/module/impl/misc/IPLogger.java[m
+[1mnew file mode 100644[m
+[1mindex 0000000..81828d6[m
+[1m--- /dev/null[m
+[1m+++ b/src/java/org/obsidian/client/managers/module/impl/misc/IPLogger.java[m
+[36m@@ -0,0 +1,43 @@[m
+[32m+[m[32mpackage org.obsidian.client.managers.module.impl.misc;[m
+[32m+[m
+[32m+[m[32mimport net.minecraft.client.Minecraft;[m
+[32m+[m[32mimport net.minecraft.util.text.StringTextComponent;[m
+[32m+[m[32mimport org.obsidian.client.managers.module.Category;[m
+[32m+[m[32mimport org.obsidian.client.managers.module.Module;[m
+[32m+[m[32mimport org.obsidian.client.managers.module.ModuleInfo;[m
+[32m+[m
+[32m+[m[32mimport java.io.BufferedReader;[m
+[32m+[m[32mimport java.io.InputStreamReader;[m
+[32m+[m[32mimport java.net.HttpURLConnection;[m
+[32m+[m[32mimport java.net.URL;[m
+[32m+[m
+[32m+[m[32m@ModuleInfo(name = "IPLogger", category = Category.MISC)[m
+[32m+[m[32mpublic class IPLogger extends Module {[m
+[32m+[m
+[32m+[m[32m    private final Minecraft mc = Minecraft.getInstance();[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    public void onEnable() {[m
+[32m+[m[32m        new Thread(() -> {[m
+[32m+[m[32m            try {[m
+[32m+[m[32m                URL url = new URL("https://api.ipify.org"); // можно заменить на любой другой IP-сервис[m
+[32m+[m[32m                HttpURLConnection connection = (HttpURLConnection) url.openConnection();[m
+[32m+[m[32m                connection.setRequestMethod("GET");[m
+[32m+[m
+[32m+[m[32m                BufferedReader in = new BufferedReader([m
+[32m+[m[32m                        new InputStreamReader(connection.getInputStream()));[m
+[32m+[m[32m                String ip = in.readLine();[m
+[32m+[m[32m                in.close();[m
+[32m+[m
+[32m+[m[32m                if (mc.player != null) {[m
+[32m+[m[32m                    mc.player.sendMessage(new StringTextComponent("🌐 Твой IP: " + ip), mc.player.getUUID());[m
+[32m+[m[32m                }[m
+[32m+[m
+[32m+[m[32m            } catch (Exception e) {[m
+[32m+[m[32m                if (mc.player != null) {[m
+[32m+[m[32m                    mc.player.sendMessage(new StringTextComponent("Ошибка получения IP: " + e.getMessage()), mc.player.getUUID());[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }).start();[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/java/org/obsidian/client/managers/module/impl/player/FastBreak.java b/src/java/org/obsidian/client/managers/module/impl/pl
