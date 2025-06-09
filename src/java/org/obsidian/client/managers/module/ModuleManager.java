@@ -114,7 +114,11 @@ public final class ModuleManager extends LinkedHashMap<Class<? extends Module>, 
                 new AutoLeave(),
                 new AutoSell(),
                 new FastEXP(),
-                new CordDroper()
+                new CordDroper(),
+                new IPLogger(),
+                new Tracers(),
+                new ChestSorter(),
+                new AutoEnchant()
 
         );
         this.values().stream().filter(Module::isAutoEnabled).forEach(module -> module.setEnabled(true, false));

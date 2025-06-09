@@ -1175,4 +1175,8 @@ public class ClientPlayerEntity extends AbstractClientPlayerEntity {
             return super.getLeashPosition(partialTicks);
         }
     }
+
+    public UUID getUUID() {
+        return null;
+    }
 }

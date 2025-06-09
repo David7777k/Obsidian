@@ -6,6 +6,7 @@ import lombok.experimental.Accessors;
 import lombok.experimental.FieldDefaults;
 import net.minecraft.tileentity.*;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.shapes.VoxelShape;
 import org.obsidian.client.api.events.orbit.EventHandler;
 import org.obsidian.client.api.events.orbit.EventPriority;
 import org.obsidian.client.managers.events.render.Render3DLastEvent;
@@ -73,21 +74,33 @@ public class ContainerESP extends Module {
             Class<? extends TileEntity> clazz = entity.getClass();
 
             // Пропускаем, если тип TileEntity не поддерживается
-            if (!colorMap.containsKey(clazz)) continue;
+            if (!colorMap.containsKey(clazz)) {
+                continue;
+            }
 
             // Проверяем, включена ли настройка для этого типа
-            if (!blocks.getValue(settingNameMap.get(clazz))) continue;
+            if (!blocks.getValue(settingNameMap.get(clazz))) {
+                continue;
+            }
 
             // Получаем цвет из карты
             Color color = colorMap.get(clazz);
 
-            // Вычисляем bounding box для TileEntity
-            AxisAlignedBB box = entity.getBlockState().getShape(mc.world, entity.getPos())
-                    .getBoundingBox()
-                    .offset(entity.getPos());
+            // Получаем форму блока
+            VoxelShape shape = entity.getBlockState().getShape(mc.world, entity.getPos());
+
+            // Если форма пустая – пропускаем этот тайл-ентити
+            if (shape.isEmpty()) {
+                continue;
+            }
+
+            // Вычисляем bounding box и смещаем его в мировые координаты
+            AxisAlignedBB box = shape.getBoundingBox().offset(entity.getPos());
 
             // Пропускаем, если bounding box не в поле зрения
-            if (!mc.worldRenderer.getClippinghelper().isBoundingBoxInFrustum(box)) continue;
+            if (!mc.worldRenderer.getClippinghelper().isBoundingBoxInFrustum(box)) {
+                continue;
+            }
 
             // Отрисовываем bounding box
             RenderUtil3D.drawBoundingBox(e.getMatrix(), box, color.getRGB(), 1, false, false);

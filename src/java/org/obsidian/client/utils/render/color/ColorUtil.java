@@ -212,6 +212,9 @@ public class ColorUtil {
         return red + "," + green + "," + blue + "," + alpha;
     }
 
+    public static void setColor(int color) {
+    }
+
     @Getter
     @RequiredArgsConstructor
     @EqualsAndHashCode

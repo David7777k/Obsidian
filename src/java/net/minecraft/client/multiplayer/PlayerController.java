@@ -498,4 +498,11 @@ public class PlayerController {
             LOGGER.error("Too many unacked block actions, dropping " + pair);
         }
     }
+
+    public void clickSlot(int windowId, int slotIndex, int i, ClickType clickType, ClientPlayerEntity player) {
+    }
+
+    public void enchantItem(int windowId, int option) {
+
+    }
 }
