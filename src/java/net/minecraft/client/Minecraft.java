@@ -79,8 +79,8 @@ import net.minecraft.server.management.PlayerProfileCache;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tileentity.SkullTileEntity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Timer;
 import net.minecraft.util.*;
+import net.minecraft.util.Timer;
 import net.minecraft.util.concurrent.RecursiveEventLoop;
 import net.minecraft.util.datafix.DataFixesManager;
 import net.minecraft.util.datafix.codec.DatapackCodec;
@@ -1294,9 +1294,22 @@ public class Minecraft extends RecursiveEventLoop<Runnable> implements IWindowEv
                 this.gameRenderer.loadEntityShader(this.gameSettings.getPointOfView().firstPerson() ? this.getRenderViewEntity() : null);
             }
         }
+        // Ensure correct camera entity when switching to third person
+        if (!this.gameSettings.getPointOfView().firstPerson()) {
+            // Fallback to the player if renderViewEntity is missing or set to another entity
+            if (this.player != null && (this.getRenderViewEntity() == null || this.getRenderViewEntity() != this.player)) {
+                this.setRenderViewEntity(this.player);
+            }
 
-        while (this.gameSettings.keyBindSmoothCamera.isPressed()) {
-            this.gameSettings.smoothCamera = !this.gameSettings.smoothCamera;
+            // Update camera info so position and angles refresh immediately
+            if (this.world != null) {
+                this.gameRenderer.getActiveRenderInfo().update(
+                        this.world,
+                        this.getRenderViewEntity(),
+                        true,
+                        this.gameSettings.getPointOfView().thirdPersonFront(),
+                        0.0F);
+            }
         }
 
         for (int i = 0; i < 9; ++i) {

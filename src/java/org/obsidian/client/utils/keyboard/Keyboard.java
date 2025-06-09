@@ -3,9 +3,9 @@ package org.obsidian.client.utils.keyboard;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.minecraft.client.util.InputMappings;
+import org.lwjgl.glfw.GLFW;
 import org.obsidian.client.api.interfaces.IMinecraft;
 import org.obsidian.client.api.interfaces.IWindow;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -186,6 +186,7 @@ public enum Keyboard implements IWindow {
     }
 
     public static boolean isKeyDown(int keyCode) {
+
         if (keyCode < 0) return false;
         return InputMappings.isKeyDown(IMinecraft.mc.getMainWindow().getHandle(), keyCode);
     }

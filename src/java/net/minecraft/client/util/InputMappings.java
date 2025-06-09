@@ -46,10 +46,18 @@ public class InputMappings {
     }
 
     public static boolean isKeyDown(long p_216506_0_, int p_216506_2_) {
+        if (p_216506_2_ == INPUT_INVALID.getKeyCode()) {
+            return false;
+        }
+
         return GLFW.glfwGetKey(p_216506_0_, p_216506_2_) == 1;
     }
 
     public static boolean keyPressed(long p_216506_0_, int p_216506_2_) {
+        if (p_216506_2_ == INPUT_INVALID.getKeyCode()) {
+            return false;
+        }
+
         if (p_216506_2_ >= 2 && p_216506_2_ <= 4) {
             return GLFW.glfwGetMouseButton(p_216506_0_, p_216506_2_) == GLFW.GLFW_PRESS;
         } else {
