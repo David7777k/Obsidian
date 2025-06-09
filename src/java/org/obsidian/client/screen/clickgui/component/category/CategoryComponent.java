@@ -10,10 +10,10 @@ import org.obsidian.client.managers.module.impl.client.Theme;
 import org.obsidian.client.screen.clickgui.ClickGuiScreen;
 import org.obsidian.client.screen.clickgui.component.WindowComponent;
 import org.obsidian.client.screen.clickgui.component.module.ModuleComponent;
-import org.obsidian.client.utils.math.Mathf;
-import org.obsidian.client.utils.other.Instance;
 import org.obsidian.client.utils.animation.Animation;
 import org.obsidian.client.utils.animation.util.Easings;
+import org.obsidian.client.utils.math.Mathf;
+import org.obsidian.client.utils.other.Instance;
 import org.obsidian.client.utils.render.color.ColorUtil;
 import org.obsidian.client.utils.render.draw.RenderUtil;
 import org.obsidian.client.utils.render.draw.Round;
@@ -33,7 +33,7 @@ public class CategoryComponent extends WindowComponent {
     private final Animation openAnimation = new Animation();
 
     public float getModuleHeight() {
-        return moduleHeight * openAnimation.getValue();
+        return (float) (moduleHeight * openAnimation.getValue());
     }
 
     public CategoryComponent(Category category, ClickGuiScreen clickGui) {
@@ -64,7 +64,7 @@ public class CategoryComponent extends WindowComponent {
         openAnimation.update();
         Theme theme = Theme.getInstance();
 
-        float animHeight = moduleHeight * openAnimation.getValue();
+        float animHeight = (float) (moduleHeight * openAnimation.getValue());
 
         float cx = (float) Mathf.step(position.x, 0.5);
         float cy = (float) Mathf.step(position.y, 0.5);
