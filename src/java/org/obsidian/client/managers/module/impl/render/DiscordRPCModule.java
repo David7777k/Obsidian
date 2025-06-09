@@ -10,10 +10,10 @@ import lombok.experimental.FieldDefaults;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
-import org.lwjgl.opengl.GL11;
 import org.obsidian.client.managers.module.Category;
 import org.obsidian.client.managers.module.Module;
 import org.obsidian.client.managers.module.ModuleInfo;
+import java.util.concurrent.CompletableFuture;
 
 @Getter
 @Accessors(fluent = true)
@@ -28,6 +28,9 @@ public class DiscordRPCModule extends Module {
     static final String SMALL_IMAGE_KEY = "small_icon";
 
     final DiscordRPC discordRPC = DiscordRPC.INSTANCE;
+
+    final Object lock = new Object();
+    Thread initThread;
     Thread rpcThread;
     volatile boolean running = false;
     volatile boolean initialized = false;
@@ -35,8 +38,14 @@ public class DiscordRPCModule extends Module {
     @Override
     public void onEnable() {
         super.onEnable();
-        // Инициализация в отдельном потоке для предотвращения блокировки основного потока
-        new Thread(this::startRPC, "DiscordRPC-Init").start();
+        synchronized (lock) {
+            if (running || initThread != null) {
+                return;
+            }
+            initThread = new Thread(this::startRPC, "DiscordRPC-Init");
+            initThread.setDaemon(true);
+            initThread.start();
+        }
     }
 
     @Override
@@ -47,149 +56,151 @@ public class DiscordRPCModule extends Module {
 
     private void startRPC() {
         try {
-            System.out.println("DiscordRPC: инициализация...");
-
-            // Проверка на наличие ошибок OpenGL перед инициализацией
-            int glError = GL11.glGetError();
-            if (glError != GL11.GL_NO_ERROR) {
-                System.err.println("OpenGL ошибка перед инициализацией Discord RPC: " + glError);
-            }
-
             DiscordEventHandlers handlers = new DiscordEventHandlers();
             handlers.ready = user -> {
-                System.out.println("DiscordRPC готов: " + user.username);
+                System.out.println("DiscordRPC ready: " + user.username);
                 initialized = true;
             };
 
-            // Инициализация Discord RPC с обработкой возможных ошибок
-            try {
-                discordRPC.Discord_Initialize(DISCORD_ID, handlers, true, null);
-            } catch (UnsatisfiedLinkError e) {
-                System.err.println("DiscordRPC: не удалось загрузить нативную библиотеку: " + e.getMessage());
-                if (mc.player != null) {
-                    mc.player.sendStatusMessage(
-                            new StringTextComponent(TextFormatting.RED + "[DiscordRPC] Ошибка загрузки библиотеки, модуль отключён."),
-                            false
-                    );
-                }
-                setEnabled(false);
-                return;
-            }
-
-            // Проверка на наличие ошибок OpenGL после инициализации
-            glError = GL11.glGetError();
-            if (glError != GL11.GL_NO_ERROR) {
-                System.err.println("OpenGL ошибка после инициализации Discord RPC: " + glError);
-            }
-
+            discordRPC.Discord_Initialize(DISCORD_ID, handlers, true, null);
+        } catch (UnsatisfiedLinkError e) {
+            System.err.println("DiscordRPC: unable to load native library: " + e.getMessage());
+            notifyPlayer(TextFormatting.RED + "[DiscordRPC] Ошибка загрузки библиотеки, модуль отключён.");
+            setEnabled(false);
+            return;
         } catch (Exception ex) {
             System.err.println("DiscordRPC: не удалось инициализировать RPC: " + ex.getMessage());
-            ex.printStackTrace();
-            if (mc.player != null) {
-                mc.player.sendStatusMessage(
-                        new StringTextComponent(TextFormatting.RED + "[DiscordRPC] Ошибка инициализации, модуль отключён."),
-                        false
-                );
-            }
+            notifyPlayer(TextFormatting.RED + "[DiscordRPC] Ошибка инициализации, модуль отключён.");
             setEnabled(false);
             return;
         }
 
-        running = true;
-        rpcThread = new Thread(() -> {
-            // Ждем небольшую паузу перед началом работы потока
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+        synchronized (lock) {
+            initThread = null;
+            if (!isEnabled()) {
+                shutdownRpc();
                 return;
             }
+            running = true;
+        }
 
-            Minecraft mc = Minecraft.getInstance();
-            DiscordRichPresence presence = new DiscordRichPresence();
-            presence.startTimestamp = System.currentTimeMillis() / 1000L;
-            presence.largeImageKey = LARGE_IMAGE_KEY;
-            presence.largeImageText = "Обсидian Client";
-            presence.smallImageKey = SMALL_IMAGE_KEY;
-            presence.smallImageText = "Онлайн";
-
-            while (running && !Thread.currentThread().isInterrupted()) {
-                try {
-                    // Проверка инициализации перед обновлением
-                    if (!initialized) {
-                        Thread.sleep(1000);
-                        continue;
-                    }
-
-                    // Обновление информации только если Discord RPC успешно инициализирован
-                    if (mc.world != null && mc.player != null) {
-                        String worldName = mc.world.getDimensionKey().getLocation().toString();
-                        presence.details = "Мир: " + worldName;
-                        presence.state = "Игрок: " + mc.player.getName().getString();
-                    } else {
-                        presence.details = "В меню";
-                        presence.state = "Ждём игрока...";
-                    }
-
-                    try {
-                        discordRPC.Discord_RunCallbacks();
-                        discordRPC.Discord_UpdatePresence(presence);
-                    } catch (Exception e) {
-                        System.err.println("Ошибка при обновлении Discord RPC: " + e.getMessage());
-                        // Продолжаем работу, не прерывая поток
-                    }
-
-                    // Увеличенный интервал для уменьшения нагрузки
-                    Thread.sleep(15_000);
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                    break;
-                } catch (Exception ex) {
-                    System.err.println("DiscordRPC: ошибка во время обновления presence — " + ex.getMessage());
-                    // Не делаем break, чтобы поток продолжал попытки работать
-                    try {
-                        Thread.sleep(30_000); // Долгая пауза при ошибке
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
-                }
-            }
-        }, "DiscordRPC-Thread");
-
+        rpcThread = new Thread(this::loop, "DiscordRPC-Thread");
         rpcThread.setDaemon(true);
         rpcThread.start();
 
-        if (mc.player != null) {
-            mc.player.sendStatusMessage(
-                    new StringTextComponent(TextFormatting.GREEN + "[DiscordRPC] Запущен."),
-                    false
-            );
-        }
+        notifyPlayer(TextFormatting.GREEN + "[DiscordRPC] Запущен.");
     }
 
-    private void stopRPC() {
-        running = false;
-        initialized = false;
-
-        if (rpcThread != null) {
-            rpcThread.interrupt();
-            try {
-                rpcThread.join(2000);
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-            }
-            rpcThread = null;
+    private void loop() {
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
         }
 
-        System.out.println("DiscordRPC: остановка...");
+        DiscordRichPresence presence = new DiscordRichPresence();
+        presence.startTimestamp = System.currentTimeMillis() / 1000L;
+        presence.largeImageKey = LARGE_IMAGE_KEY;
+        presence.largeImageText = "Обсидian Client";
+        presence.smallImageKey = SMALL_IMAGE_KEY;
+        presence.smallImageText = "Онлайн";
+
+        while (running && !Thread.currentThread().isInterrupted()) {
+            try {
+                if (!initialized) {
+                    Thread.sleep(1000);
+                    continue;
+                }
+
+                updatePresence(presence);
+
+                discordRPC.Discord_RunCallbacks();
+                discordRPC.Discord_UpdatePresence(presence);
+
+                Thread.sleep(15_000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            } catch (Exception ex) {
+                System.err.println("DiscordRPC update error: " + ex.getMessage());
+                try {
+                    Thread.sleep(30_000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+
+        shutdownRpc();
+    }
+
+    private void updatePresence(DiscordRichPresence presence) throws Exception {
+        Minecraft mc = Minecraft.getInstance();
+        CompletableFuture<String[]> future = mc.supplyAsync(() -> {
+            if (mc.world != null && mc.player != null) {
+                String worldName = mc.world.getDimensionKey().getLocation().toString();
+                String playerName = mc.player.getName().getString();
+                return new String[]{"Мир: " + worldName, "Игрок: " + playerName};
+            } else {
+                return new String[]{"В меню", "Ждём игрока..."};
+            }
+        });
+        String[] info = future.get();
+        presence.details = info[0];
+        presence.state = info[1];
+    }
+
+    private void shutdownRpc() {
+        if (!initialized) {
+            return;
+        }
+        initialized = false;
         try {
             discordRPC.Discord_ClearPresence();
             discordRPC.Discord_Shutdown();
         } catch (Exception ex) {
-            // Просто логируем ошибку, но не делаем ничего особенного
             System.err.println("DiscordRPC: ошибка при завершении — " + ex.getMessage());
         }
+    }
+
+    private void notifyPlayer(String message) {
+        Minecraft mc = Minecraft.getInstance();
+        mc.execute(() -> {
+            if (mc.player != null) {
+                mc.player.sendStatusMessage(new StringTextComponent(message), false);
+            }
+        });
+    }
+
+    private void stopRPC() {
+        synchronized (lock) {
+            running = false;
+            initialized = false;
+
+            if (initThread != null) {
+                initThread.interrupt();
+                try {
+                    initThread.join(2000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                initThread = null;
+            }
+
+            if (rpcThread != null) {
+                rpcThread.interrupt();
+                try {
+                    rpcThread.join(2000);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+                rpcThread = null;
+            }
+        }
+
+        shutdownRpc();
     }
 
     @Override
