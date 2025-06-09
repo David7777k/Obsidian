@@ -15,6 +15,7 @@ import org.obsidian.client.screen.clickgui.component.WindowComponent;
 import org.obsidian.client.screen.clickgui.component.setting.SettingComponent;
 import org.obsidian.client.screen.clickgui.component.setting.impl.*;
 import org.obsidian.client.utils.animation.util.Easings;
+import org.obsidian.client.utils.animation.Animation;
 import org.obsidian.client.utils.keyboard.Keyboard;
 import org.obsidian.client.utils.math.Mathf;
 import org.obsidian.client.utils.other.SoundUtil;
@@ -40,6 +41,7 @@ public class ModuleComponent extends WindowComponent {
     private float settingHeight = 0;
     private final float margin = 5;
     private final Script script = new Script();
+    private final Animation toggleAnimation = new Animation();
     private final List<Particle> particles = new ArrayList<>();
     private final ResourceLocation bloom = new Namespaced("particle/bloom.png");
     private final Random random = new FastRandom();
@@ -90,6 +92,7 @@ public class ModuleComponent extends WindowComponent {
             expandAnimation.set(0F);
             expanded = false;
         }
+        toggleAnimation.set(module.isEnabled() ? 1F : 0F);
     }
 
     @Override
@@ -97,6 +100,7 @@ public class ModuleComponent extends WindowComponent {
         script.update();
         expandAnimation.update();
         hoverAnimation.update();
+        toggleAnimation.update();
 
         particles.removeIf(Particle::isFinished);
 
@@ -132,6 +136,10 @@ public class ModuleComponent extends WindowComponent {
 
         RectUtil.drawGradientV(matrix, position.x + append, position.y + append, size.x - (append * 2), (size.y - (append * 2)) / 2F, ColorUtil.multDark(settingBackground, 0.5f), settingBackground, true);
         RectUtil.drawGradientV(matrix, position.x + append, position.y + append + ((size.y - (append * 2)) / 2F), size.x - (append * 2), (size.y - (append * 2)) / 2F, settingBackground, ColorUtil.multDark(settingBackground, 0.5f), true);
+        if (toggleAnimation.getValue() > 0F) {
+            int overlay = ColorUtil.multAlpha(accentColor(), toggleAnimation.getValue() * 0.6F);
+            RectUtil.drawRect(matrix, position.x + append, position.y + append, size.x - (append * 2), size.y - (append * 2), overlay, true);
+        }
 
         boolean noneMatch = panel().getCategoryComponents()
                 .stream()
@@ -204,7 +212,10 @@ public class ModuleComponent extends WindowComponent {
 
                 setBinding(!isBinding());
             }
-            if (!isBinding() && isLClick(button)) module.toggle();
+            if (!isBinding() && isLClick(button)) {
+                module.toggle();
+                toggleAnimation.run(module.isEnabled() ? 1F : 0F, 0.35, Easings.CUBIC_OUT);
+            }
             if (isRClick(button) && !settingComponents.isEmpty()) {
                 expanded = !expanded;
                 expandAnimation.run(expanded ? 1 : 0, 0.25, Easings.QUART_OUT);
