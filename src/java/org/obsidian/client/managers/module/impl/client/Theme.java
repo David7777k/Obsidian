@@ -10,6 +10,7 @@ import org.obsidian.client.managers.module.Module;
 import org.obsidian.client.managers.module.ModuleInfo;
 import org.obsidian.client.managers.module.settings.impl.ColorSetting;
 import org.obsidian.client.managers.module.settings.impl.DelimiterSetting;
+import org.obsidian.client.managers.module.settings.impl.ListSetting;
 import org.obsidian.client.utils.math.Mathf;
 import org.obsidian.client.utils.other.Instance;
 import org.obsidian.client.utils.render.color.ColorUtil;
@@ -34,6 +35,13 @@ public class Theme extends Module {
     private final ColorSetting secondary = new ColorSetting(this, "Второстепенный", ColorUtil.getColor(70, 70, 200));
     private final ColorSetting tertiary = new ColorSetting(this, "Третичный", ColorUtil.getColor(50, 50, 150));
     private final ColorSetting starColor = new ColorSetting(this, "Цвет звёздочек", ColorUtil.getColor(255, 215, 0)); // Значение по умолчанию - золотистый
+    private final ListSetting<ThemeType> preset = new ListSetting<>(this, "Preset", ThemeType.values())
+            .onAction(() -> applyTheme(preset.getValue()))
+            .set(ThemeType.DARK);
+
+    public Theme() {
+        applyTheme(preset.getValue());
+    }
 
     public void drawClientRect(MatrixStack matrix, float x, float y, float width, float height, float alpha, float radius) {
         x = (float) Mathf.step(x, 0.5);
@@ -96,5 +104,15 @@ public class Theme extends Module {
     // Новый метод для получения цвета звёздочек
     public int starColor() {
         return starColor.getValue();
+    }
+
+    public void applyTheme(ThemeType type) {
+        client.set(type.getClientColor());
+        background.set(type.getBackgroundColor());
+        shadow.set(type.getShadowColor());
+        text.set(type.getTextColor());
+        icon.set(type.getIconColor());
+        secondary.set(type.getSecondaryColor());
+        tertiary.set(type.getTertiaryColor());
     }
 }
