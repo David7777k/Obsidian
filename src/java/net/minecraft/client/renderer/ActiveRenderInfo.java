@@ -68,10 +68,14 @@ public class ActiveRenderInfo {
         this.setDirection(event.getYaw(), event.getPitch());
         this.setPosition(MathHelper.lerp(partialTicks, renderViewEntity.prevPosX, renderViewEntity.getPosX()), MathHelper.lerp(partialTicks, renderViewEntity.prevPosY, renderViewEntity.getPosY()) + (double) MathHelper.lerp(partialTicks, this.previousHeight, this.height), MathHelper.lerp(partialTicks, renderViewEntity.prevPosZ, renderViewEntity.getPosZ()));
         if (thirdPersonIn) {
+            double distance = this.getUpdatedSmoothZooming(!renderViewEntity.isSpectator());
+            distance = this.calcCameraDistance(distance);
+            this.movePosition(-distance, 0.0D, 0.0D);
+
             if (thirdPersonReverseIn) {
                 this.setDirection(event.getYaw() + 180.0F, -event.getPitch());
             }
-            
+
         } else if (renderViewEntity instanceof LivingEntity && ((LivingEntity) renderViewEntity).isSleeping()) {
             Direction direction = ((LivingEntity) renderViewEntity).getBedDirection();
             this.setDirection(direction != null ? direction.getHorizontalAngle() - 180.0F : 0.0F, 0.0F);
