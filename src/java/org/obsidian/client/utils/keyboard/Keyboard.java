@@ -186,6 +186,7 @@ public enum Keyboard implements IWindow {
     }
 
     public static boolean isKeyDown(int keyCode) {
+        if (keyCode < 0) return false;
         return InputMappings.isKeyDown(IMinecraft.mc.getMainWindow().getHandle(), keyCode);
     }
 
@@ -194,6 +195,7 @@ public enum Keyboard implements IWindow {
     }
 
     public boolean isKeyDown() {
+        if (this.key < 0) return false;
         return InputMappings.isKeyDown(IMinecraft.mc.getMainWindow().getHandle(), this.key);
     }
 }
