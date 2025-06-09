@@ -172,11 +172,11 @@ public class InputMappings {
 
     public enum Type {
         KEYSYM("key.keyboard", (p_237528_0_, p_237528_1_) -> {
-            String s = GLFW.glfwGetKeyName(p_237528_0_, -1);
+            String s = p_237528_0_ != -1 ? GLFW.glfwGetKeyName(p_237528_0_, -1) : null;
             return s != null ? new StringTextComponent(s) : new TranslationTextComponent(p_237528_1_);
         }),
         SCANCODE("scancode", (p_237527_0_, p_237527_1_) -> {
-            String s = GLFW.glfwGetKeyName(-1, p_237527_0_);
+            String s = p_237527_0_ != -1 ? GLFW.glfwGetKeyName(-1, p_237527_0_) : null;
             return s != null ? new StringTextComponent(s) : new TranslationTextComponent(p_237527_1_);
         }),
         MOUSE("key.mouse", (p_237524_0_, p_237524_1_) -> {
