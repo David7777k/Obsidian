@@ -57,7 +57,7 @@ public abstract class WindowComponent implements IScreen {
 
     public int accentColor() {
         Theme theme = Theme.getInstance();
-        return ColorUtil.multAlpha(theme.textColor(), alphaPC());
+        return ColorUtil.multAlpha(theme.clientColor(), alphaPC());
     }
 
     public boolean isHover(int mouseX, int mouseY) {

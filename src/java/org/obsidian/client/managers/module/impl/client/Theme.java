@@ -27,14 +27,10 @@ public class Theme extends Module {
     }
 
     private final DelimiterSetting delimiter = new DelimiterSetting(this, "Цвета клиента");
-    private final ColorSetting client = new ColorSetting(this, "Клиент", ColorUtil.getColor(90, 90, 255));
-    private final ColorSetting background = new ColorSetting(this, "Задний фон", ColorUtil.getColor(20, 20, 30));
-    private final ColorSetting shadow = new ColorSetting(this, "Тень", ColorUtil.getColor(33, 33, 43));
-    private final ColorSetting text = new ColorSetting(this, "Текст", ColorUtil.getColor(150, 100, 255));
-    private final ColorSetting icon = new ColorSetting(this, "Иконки", ColorUtil.getColor(120, 60, 255));
-    private final ColorSetting secondary = new ColorSetting(this, "Второстепенный", ColorUtil.getColor(70, 70, 200));
-    private final ColorSetting tertiary = new ColorSetting(this, "Третичный", ColorUtil.getColor(50, 50, 150));
-    private final ColorSetting starColor = new ColorSetting(this, "Цвет звёздочек", ColorUtil.getColor(255, 215, 0)); // Значение по умолчанию - золотистый
+    private final ColorSetting accent = new ColorSetting(this, "Accent", ColorUtil.getColor(130, 90, 255));
+    private final ColorSetting background = new ColorSetting(this, "Background", ColorUtil.getColor(20, 20, 30));
+    private final ColorSetting text = new ColorSetting(this, "Text", ColorUtil.getColor(255, 255, 255));
+    private final ColorSetting starColor = new ColorSetting(this, "Star", ColorUtil.getColor(255, 215, 0));
     private final ListSetting<ThemeType> preset = new ListSetting<>(this, "Preset", ThemeType.values())
             .onAction(() -> applyTheme(preset.getValue()))
             .set(ThemeType.DARK);
@@ -62,7 +58,7 @@ public class Theme extends Module {
     }
 
     public int clientColor() {
-        return client.getValue();
+        return accent.getValue();
     }
 
     public int backgroundColor() {
@@ -70,7 +66,7 @@ public class Theme extends Module {
     }
 
     public int shadowColor() {
-        return shadow.getValue();
+        return ColorUtil.multDark(background.getValue(), 0.8F);
     }
 
     public int textColor() {
@@ -82,11 +78,11 @@ public class Theme extends Module {
     }
 
     public int iconColor() {
-        return icon.getValue();
+        return accent.getValue();
     }
 
     public int darkColor() {
-        return ColorUtil.multDark(client.getValue(), 0.25F);
+        return ColorUtil.multDark(accent.getValue(), 0.25F);
     }
 
     public int getSpeed() {
@@ -94,11 +90,11 @@ public class Theme extends Module {
     }
 
     public int secondaryColor() {
-        return secondary.getValue();
+        return ColorUtil.multDark(accent.getValue(), 0.75F);
     }
 
     public int tertiaryColor() {
-        return tertiary.getValue();
+        return ColorUtil.multDark(accent.getValue(), 0.5F);
     }
 
     // Новый метод для получения цвета звёздочек
@@ -107,12 +103,8 @@ public class Theme extends Module {
     }
 
     public void applyTheme(ThemeType type) {
-        client.set(type.getClientColor());
+        accent.set(type.getAccentColor());
         background.set(type.getBackgroundColor());
-        shadow.set(type.getShadowColor());
         text.set(type.getTextColor());
-        icon.set(type.getIconColor());
-        secondary.set(type.getSecondaryColor());
-        tertiary.set(type.getTertiaryColor());
     }
 }
