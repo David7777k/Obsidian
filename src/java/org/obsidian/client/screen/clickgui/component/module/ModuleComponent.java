@@ -119,7 +119,7 @@ public class ModuleComponent extends WindowComponent {
         boolean isHover = isHover(mouseX, mouseY, position.x + append, position.y + append, size.x - (append * 2), size.y - (append * 2));
         hoverAnimation.run(binding && !script.isFinished() ? 1.5 : (isHover ? 1 : expanded ? angle : 0), 0.25, binding && !script.isFinished() ? Easings.BACK_OUT : Easings.QUAD_OUT, true);
 
-        int color = module.isEnabled() ? ColorUtil.multAlpha(Theme.getInstance().textColor(), alphaPC()) : ColorUtil.overCol(accentColor(), Color.GRAY.getRGB(), 0.75F);
+        int color = module.isEnabled() ? ColorUtil.multAlpha(Theme.getInstance().clientColor(), alphaPC()) : ColorUtil.overCol(accentColor(), Color.GRAY.getRGB(), 0.75F);
         int settingBackground = ColorUtil.multAlpha(backgroundColor(), 0.5F);
 
         if (!module.getSettings().isEmpty()) {

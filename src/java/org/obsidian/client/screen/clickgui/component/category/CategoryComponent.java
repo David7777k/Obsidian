@@ -2,6 +2,7 @@ package org.obsidian.client.screen.clickgui.component.category;
 
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.MainWindow;
 import net.mojang.blaze3d.matrix.MatrixStack;
 import org.obsidian.client.Obsidian;
 import org.obsidian.client.managers.module.Category;
@@ -17,6 +18,7 @@ import org.obsidian.client.utils.other.Instance;
 import org.obsidian.client.utils.render.color.ColorUtil;
 import org.obsidian.client.utils.render.draw.RenderUtil;
 import org.obsidian.client.utils.render.draw.Round;
+import org.obsidian.client.utils.render.draw.ScissorUtil;
 import org.obsidian.client.utils.render.font.Fonts;
 
 import java.util.ArrayList;
@@ -79,6 +81,9 @@ public class CategoryComponent extends WindowComponent {
         font.drawCenter(matrix, category.getName(), position.x + (size.x / 2F), position.y + (size.y / 2F) - (categoryFontSize / 2F), ColorUtil.multAlpha(theme.textColor(), alphaPC()), categoryFontSize);
 
         float offset = 0;
+        ScissorUtil.enable();
+        MainWindow window = Minecraft.getInstance().getMainWindow();
+        ScissorUtil.scissor(window, cx, cy + size.y, cwidth, animHeight);
         for (ModuleComponent component : moduleComponents) {
             if (Obsidian.inst().clickGui().searchCheck(component.getModule().getName())) continue;
             component.position().set(position.x, position.y + size.y + offset);
@@ -87,6 +92,7 @@ public class CategoryComponent extends WindowComponent {
             }
             offset += (float) (component.size().y + (component.expandAnimation().getValue() * component.getSettingHeight()));
         }
+        ScissorUtil.disable();
         moduleHeight = offset;
     }
 

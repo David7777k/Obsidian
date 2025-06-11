@@ -13,6 +13,7 @@ import org.obsidian.client.screen.clickgui.ClickGuiScreen;
 import org.obsidian.client.screen.clickgui.component.category.CategoryComponent;
 import org.obsidian.client.screen.clickgui.component.module.ModuleComponent;
 import org.obsidian.client.utils.keyboard.Keyboard;
+import org.obsidian.client.managers.module.impl.client.Theme;
 import org.obsidian.client.utils.render.color.ColorUtil;
 import org.obsidian.client.utils.render.draw.RectUtil;
 import org.obsidian.client.utils.render.scroll.ScrollUtil;
@@ -111,7 +112,8 @@ public class Panel implements IScreen, IWindow {
 
     @Override
     public void render(MatrixStack matrix, int mouseX, int mouseY, float partialTicks) {
-        RectUtil.drawRect(matrix, 0, 0, width(), height(), ColorUtil.getColor(0, clickGui.alpha().get() / 2F));
+        int overlay = ColorUtil.replAlpha(Theme.getInstance().backgroundColor(), clickGui.alpha().get() / 1.5F);
+        RectUtil.drawRect(matrix, 0, 0, width(), height(), overlay);
 
         componentMove(matrix);
 
