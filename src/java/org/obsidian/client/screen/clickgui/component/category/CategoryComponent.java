@@ -72,12 +72,12 @@ public class CategoryComponent extends WindowComponent {
         float cy = (float) Mathf.step(position.y, 0.5);
         float cwidth = (float) Mathf.step(size.x, 0.5);
         float cheight = (float) Mathf.step(size.y + animHeight, 0.5);
-        float cradius = 4;
+        float cradius = 2;
 
-        RenderUtil.Shadow.drawShadow(matrix, cx - cradius / 2, cy - cradius / 2, cwidth + cradius, cheight + cradius, 10, ColorUtil.replAlpha(theme.shadowColor(), (float) Math.pow(alphaPC(), 3)));
-        RenderUtil.Rounded.smooth(matrix, cx, cy, cwidth, cheight, ColorUtil.replAlpha(backgroundColor(), alphaPC()), Round.of(cradius));
+        RenderUtil.Rounded.roundedRect(matrix, cx, cy, cwidth, cheight, ColorUtil.replAlpha(backgroundColor(), alphaPC()), Round.of(cradius));
+        RenderUtil.Rounded.roundedOutline(matrix, cx, cy, cwidth, cheight, 0.5F, ColorUtil.replAlpha(theme.textColor(), alphaPC()), Round.of(cradius));
 
-        Fonts.CLICKGUI.draw(matrix, category.getIcon(), position.x + 5, position.y + 5, ColorUtil.multAlpha(theme.iconColor(), alphaPC()), categoryFontSize);
+        Fonts.CLICKGUI.draw(matrix, category.getIcon(), position.x + 5, position.y + 5, ColorUtil.multAlpha(theme.textColor(), alphaPC()), categoryFontSize);
         font.drawCenter(matrix, category.getName(), position.x + (size.x / 2F), position.y + (size.y / 2F) - (categoryFontSize / 2F), ColorUtil.multAlpha(theme.textColor(), alphaPC()), categoryFontSize);
 
         float offset = 0;
