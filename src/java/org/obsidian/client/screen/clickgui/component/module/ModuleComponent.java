@@ -102,73 +102,28 @@ public class ModuleComponent extends WindowComponent {
         hoverAnimation.update();
         toggleAnimation.update();
 
-        particles.removeIf(Particle::isFinished);
-
-        particles.forEach(particle -> {
-            particle.update(Mathf.deltaTime());
-            particle.handleBoundaryCollision(position.x, position.y, position.x + size.x, position.y + size.y);
-        });
-
         if (expanded && panel().getExpandedModule() != this) {
             expandAnimation.run(0, 0.25, Easings.QUART_OUT, true).onFinished(() -> expanded = false);
         }
 
-        float append = 2F;
-        float angle = (float) Mathf.clamp(0F, 1F, ((Math.sin(System.currentTimeMillis() / 200D) + 1F) / 2F));
+        boolean isHover = isHover(mouseX, mouseY);
+        hoverAnimation.run(isHover ? 1 : 0, 0.25, Easings.QUAD_OUT, true);
 
-        boolean isHover = isHover(mouseX, mouseY, position.x + append, position.y + append, size.x - (append * 2), size.y - (append * 2));
-        hoverAnimation.run(binding && !script.isFinished() ? 1.5 : (isHover ? 1 : expanded ? angle : 0), 0.25, binding && !script.isFinished() ? Easings.BACK_OUT : Easings.QUAD_OUT, true);
-
-        int color = module.isEnabled() ? ColorUtil.multAlpha(Theme.getInstance().clientColor(), alphaPC()) : ColorUtil.overCol(accentColor(), Color.GRAY.getRGB(), 0.75F);
-        int settingBackground = ColorUtil.multAlpha(backgroundColor(), 0.5F);
-
-        if (!module.getSettings().isEmpty()) {
-            int green = expanded ? ColorUtil.getColor(0, 255, 0, alpha()) : accentColor();
-            RenderUtil.bindTexture(bloom);
-            int dotSize = 5;
-            RectUtil.drawRect(matrix, position.x + size.x - (append * 2) - dotSize, position.y + size.y / 2F - dotSize / 2F, dotSize, dotSize, green, green, green, green, true, true);
-        }
-
-        if (hoverAnimation.getValue() != 0) {
-            int shadowColor = ColorUtil.multAlpha(accentColor(), hoverAnimation().get() * 0.1F);
-            RectUtil.drawRoundedRectShadowed(matrix, position.x + append, position.y + append, size.x - (append * 2), (size.y - (append * 2)), append, hoverAnimation().getValue() * 6F, shadowColor, shadowColor, shadowColor, shadowColor, true, true, true, true);
-        }
-
-        RectUtil.drawGradientV(matrix, position.x + append, position.y + append, size.x - (append * 2), (size.y - (append * 2)) / 2F, ColorUtil.multDark(settingBackground, 0.5f), settingBackground, true);
-        RectUtil.drawGradientV(matrix, position.x + append, position.y + append + ((size.y - (append * 2)) / 2F), size.x - (append * 2), (size.y - (append * 2)) / 2F, settingBackground, ColorUtil.multDark(settingBackground, 0.5f), true);
+        int bg = ColorUtil.replAlpha(backgroundColor(), alphaPC());
+        int border = ColorUtil.replAlpha(Theme.getInstance().textColor(), alphaPC());
         if (toggleAnimation.getValue() > 0F) {
-            int overlay = ColorUtil.multAlpha(accentColor(), toggleAnimation.getValue() * 0.6F);
-            RectUtil.drawRect(matrix, position.x + append, position.y + append, size.x - (append * 2), size.y - (append * 2), overlay, true);
+            bg = ColorUtil.overCol(bg, Theme.getInstance().clientColor(), toggleAnimation.getValue());
         }
 
-        boolean noneMatch = panel().getCategoryComponents()
-                .stream()
-                .noneMatch(category -> category.getModuleComponents()
-                        .stream()
-                        .anyMatch(module -> module.isBinding() || module.settingComponents
-                                .stream()
-                                .anyMatch(settingComponent -> settingComponent instanceof StringSettingComponent component && component.textBox.selected)
-                        )
-                );
-
-        // Текст модуля
-        String moduleText = binding ? "Binding | " + Keyboard.keyName(module.getKey()) : (Keyboard.KEY_RIGHT_CONTROL.isKeyDown() && noneMatch) ? Keyboard.keyName(module.getKey()) + " | " + module.getName() : module.getName();
-
-        // Отрисовка текста модуля
-        font.drawCenter(matrix, moduleText, position.x + (size.x / 2F), position.y + (size.y / 2.7F), color, moduleFontSize + (hoverAnimation.get() / 2F));
-
-        // Отрисовка "***" над модулем, если isStarred() возвращает true
-        if (module.isStarred()) {
-            float starTextSize = 8; // Размер шрифта для "***"
-            float starTextX = position.x + (size.x / 1.3F) + 11; // Центр по горизонтали
-            float starTextY = position.y + (size.y / 1.17F) - (moduleFontSize / 2F) - starTextSize - 2; // Над текстом модуля
-            Fonts.SF_BOLD.drawCenter(matrix, "***", starTextX, starTextY, ColorUtil.multAlpha(Theme.getInstance().starColor(), 0.7F), starTextSize); // Используем цвет из темы
+        if (hoverAnimation.getValue() > 0F) {
+            border = ColorUtil.replAlpha(ColorUtil.getColor(240, 240, 240), alphaPC());
         }
 
-        StencilUtil.enable();
-        RectUtil.drawRect(matrix, position.x, position.y + size.y, size.x, expandAnimation.getValue() * settingHeight, ColorUtil.getColor(128, 128));
-        StencilUtil.read(1);
-        RectUtil.drawGradientV(matrix, position.x + 1F, position.y + size.y, size.x - 2F, expandAnimation.getValue() * (settingHeight - margin / 2F), ColorUtil.multAlpha(backgroundColor(), 0.5F), ColorUtil.getColor(0, 0), false);
+        RenderUtil.Rounded.roundedRect(matrix, position.x, position.y, size.x, size.y, bg, Round.of(2));
+        RenderUtil.Rounded.roundedOutline(matrix, position.x, position.y, size.x, size.y, 0.5F, border, Round.of(2));
+
+        String moduleText = binding ? "Binding | " + Keyboard.keyName(module.getKey()) : module.getName();
+        font.drawCenter(matrix, moduleText, position.x + (size.x / 2F), position.y + (size.y / 2F) - (moduleFontSize / 2F), ColorUtil.multAlpha(Theme.getInstance().textColor(), alphaPC()), moduleFontSize);
 
         settingHeight = 0;
         if ((expanded || !expandAnimation.isFinished()) && !settingComponents.isEmpty()) {
@@ -181,16 +136,6 @@ public class ModuleComponent extends WindowComponent {
                 offset += component.size().y;
             }
             settingHeight = offset;
-        }
-        StencilUtil.disable();
-        RenderUtil.bindTexture(bloom);
-        for (Particle particle : particles) {
-            particle.setBaseX(position.x + (size.x / 2F));
-            particle.setBaseY(position.y + (size.y / 2F));
-            particle.getAnimation().run(particle.getTimePC(1500) < 0.5 ? 1 : 0, 1.500 / 2D, Easings.EXPO_OUT, true);
-            int white = ColorUtil.multAlpha(accentColor(), particle.getAnimation().get() / 5F);
-            RectUtil.drawRect(matrix, particle.getBaseX() - (particle.getSize() * 4), particle.getBaseY() - (particle.getSize() * 4), particle.getSize() * 8.0F, particle.getSize() * 8.0F, ColorUtil.multAlpha(white, 0.05F), true, true);
-            RectUtil.drawRect(matrix, particle.getBaseX() - (particle.getSize()), particle.getBaseY() - (particle.getSize()), particle.getSize() * 2.0F, particle.getSize() * 2.0F, white, true, true);
         }
     }
 

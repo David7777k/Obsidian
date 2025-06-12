@@ -27,13 +27,13 @@ public class Theme extends Module {
     }
 
     private final DelimiterSetting delimiter = new DelimiterSetting(this, "Цвета клиента");
-    private final ColorSetting accent = new ColorSetting(this, "Accent", ColorUtil.getColor(130, 90, 255));
-    private final ColorSetting background = new ColorSetting(this, "Background", ColorUtil.getColor(20, 20, 30));
-    private final ColorSetting text = new ColorSetting(this, "Text", ColorUtil.getColor(255, 255, 255));
-    private final ColorSetting starColor = new ColorSetting(this, "Star", ColorUtil.getColor(255, 215, 0));
+    private final ColorSetting accent = new ColorSetting(this, "Accent", ColorUtil.getColor(224, 224, 224));
+    private final ColorSetting background = new ColorSetting(this, "Background", ColorUtil.getColor(32, 32, 32));
+    private final ColorSetting text = new ColorSetting(this, "Text", ColorUtil.getColor(224, 224, 224));
+    private final ColorSetting starColor = new ColorSetting(this, "Star", ColorUtil.getColor(224, 224, 224));
     private final ListSetting<ThemeType> preset = new ListSetting<>(this, "Preset", ThemeType.values())
             .onAction(() -> applyTheme(preset.getValue()))
-            .set(ThemeType.DARK);
+            .set(ThemeType.FLAT);
 
     public Theme() {
         applyTheme(preset.getValue());
@@ -45,16 +45,16 @@ public class Theme extends Module {
         width = (float) Mathf.step(width, 0.5);
         height = (float) Mathf.step(height, 0.5);
 
-        RenderUtil.Shadow.drawShadow(matrix, x - radius / 2, y - radius / 2, width + radius, height + radius, 10, ColorUtil.replAlpha(shadowColor(), (float) Math.pow(alpha, 3)));
-        RenderUtil.Rounded.smooth(matrix, x, y, width, height, ColorUtil.replAlpha(backgroundColor(), alpha), Round.of(radius));
+        RenderUtil.Rounded.roundedRect(matrix, x, y, width, height, ColorUtil.replAlpha(backgroundColor(), alpha), Round.of(radius));
+        RenderUtil.Rounded.roundedOutline(matrix, x, y, width, height, 0.5F, ColorUtil.replAlpha(textColor(), alpha), Round.of(radius));
     }
 
     public void drawClientRect(MatrixStack matrix, float x, float y, float width, float height, float alpha) {
-        drawClientRect(matrix, x, y, width, height, alpha, 4);
+        drawClientRect(matrix, x, y, width, height, alpha, 2);
     }
 
     public void drawClientRect(MatrixStack matrix, float x, float y, float width, float height) {
-        drawClientRect(matrix, x, y, width, height, 1F, 4);
+        drawClientRect(matrix, x, y, width, height, 1F, 2);
     }
 
     public int clientColor() {

@@ -112,7 +112,7 @@ public class Panel implements IScreen, IWindow {
 
     @Override
     public void render(MatrixStack matrix, int mouseX, int mouseY, float partialTicks) {
-        int overlay = ColorUtil.replAlpha(Theme.getInstance().backgroundColor(), clickGui.alpha().get() / 1.5F);
+        int overlay = ColorUtil.getColor(32, 32, 32, clickGui.alpha().get() * 0.8F);
         RectUtil.drawRect(matrix, 0, 0, width(), height(), overlay);
 
         componentMove(matrix);
