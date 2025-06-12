@@ -13,6 +13,7 @@ import org.obsidian.client.api.interfaces.IMinecraft;
 import org.obsidian.client.api.interfaces.IMouse;
 import org.obsidian.client.api.interfaces.IWindow;
 import org.obsidian.client.managers.module.impl.client.ClickGui;
+import org.obsidian.client.managers.module.impl.client.Theme;
 import org.obsidian.client.managers.module.impl.render.Hud;
 import org.obsidian.client.screen.clickgui.component.Panel;
 import org.obsidian.client.screen.clickgui.component.module.ModuleComponent;
@@ -39,7 +40,8 @@ public class ClickGuiScreen extends Screen implements IMinecraft, IWindow, IMous
     private final float categoryWidth = 110, categoryHeight = 20, categoryOffset = 10;
     private final Panel panel = new Panel(this);
 
-    private final TextBox searchField = new TextBox(new Vector2f(), Fonts.SF_MEDIUM, 8, ColorUtil.getColor(255, 255, 255), TextAlign.CENTER, "Search: Ctrl + F", 0, false, false);
+    private final TextBox searchField = new TextBox(new Vector2f(), Fonts.SF_MEDIUM, 8,
+            ColorUtil.getColor(255, 255, 255), TextAlign.CENTER, "Search modules (Ctrl+F)", 0, false, false);
     private final GifRender gifRender = new GifRender(new Namespaced("texture/bat.gif"));
 
     public ClickGuiScreen() {
@@ -100,7 +102,7 @@ public class ClickGuiScreen extends Screen implements IMinecraft, IWindow, IMous
     }
 
     private void renderSearchField(MatrixStack matrixStack) {
-        searchField.setEmptyText("Search: Ctrl + F");
+        searchField.setEmptyText("Search modules (Ctrl+F)");
         float searchFieldHeight = searchField.getFontSize() * 2F;
 
         double searchFieldX = (scaled().x / 2F);
@@ -109,8 +111,8 @@ public class ClickGuiScreen extends Screen implements IMinecraft, IWindow, IMous
         float searchWidth = isSearching() ? searchField.getFont().getWidth(searchField.getText(), searchField.getFontSize()) + 10F : searchField.getFont().getWidth(searchField.getEmptyText(), searchField.getFontSize()) + 10F;
 
         searchField.position.set(searchFieldX, searchFieldY + ((searchFieldHeight / 2F) - (searchField.getFontSize() / 2F)));
-        searchField.setWidth(100);
-        searchField.setColor(ColorUtil.getColor(128, alpha.get()));
+        searchField.setWidth(searchWidth);
+        searchField.setColor(ColorUtil.replAlpha(Theme.getInstance().textColor(), (float) alpha.get()));
 
         int color = ColorUtil.getColor(0, 0, 0, alpha.get() / 2F);
         int shadowColor = ColorUtil.getColor(0, 0, 0, alpha.get() / 4F);

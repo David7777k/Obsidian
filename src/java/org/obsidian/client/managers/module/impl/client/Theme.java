@@ -33,7 +33,7 @@ public class Theme extends Module {
     private final ColorSetting starColor = new ColorSetting(this, "Star", ColorUtil.getColor(224, 224, 224));
     private final ListSetting<ThemeType> preset = new ListSetting<>(this, "Preset", ThemeType.values())
             .onAction(() -> applyTheme(preset.getValue()))
-            .set(ThemeType.FLAT);
+            .set(ThemeType.MODERN);
 
     public Theme() {
         applyTheme(preset.getValue());
