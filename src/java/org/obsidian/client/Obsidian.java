@@ -33,7 +33,8 @@ import org.obsidian.client.managers.other.staff.StaffManager;
 import org.obsidian.client.screen.account.AccountFile;
 import org.obsidian.client.screen.account.AccountGuiScreen;
 import org.obsidian.client.screen.account.AccountManager;
-import org.obsidian.client.screen.clickgui.ClickGuiScreen;
+import im.expensive.ui.dropdown.DropDown;
+import net.minecraft.util.text.StringTextComponent;
 import org.obsidian.client.screen.flatgui.FlatGuiScreen;
 import org.obsidian.client.utils.file.FileManager;
 import org.obsidian.client.utils.other.Console;
@@ -85,7 +86,7 @@ public class Obsidian {
 
     private WaveyCapesBase waveyCapes;
     private NotificationManager notificationManager;
-    private ClickGuiScreen clickGui;
+    private DropDown clickGui;
     private FlatGuiScreen flatGui;
     private AccountGuiScreen accountGui;
     private final Profiler profiler = new Profiler();
@@ -135,7 +136,7 @@ public class Obsidian {
     }
 
     private void initScreens() {
-        this.clickGui = new ClickGuiScreen();
+        this.clickGui = new DropDown(new StringTextComponent(""));
         this.flatGui = new FlatGuiScreen();
         this.accountGui = new AccountGuiScreen();
     }
