@@ -16,7 +16,7 @@ public class Fonts {
             SF_REGULAR,
             SF_SEMIBOLD;
 
-    public static Font CLICKGUI, HUD, MUSIC_ICONS, ACCOUNT;
+    public static Font CLICKGUI, HUD, MUSIC_ICONS, ACCOUNT, montserrat, icons;
 
     public static void loadFonts() {
         SF_BOLD = new Font("sf_bold");
@@ -29,6 +29,8 @@ public class Fonts {
         HUD = new Font("hud");
         MUSIC_ICONS = new Font("music_icons");
         ACCOUNT = new Font("account");
+        montserrat = new Font("sf_regular");
+        icons = new Font("music_icons");
     }
 
     public static Font valueOf(String name) {

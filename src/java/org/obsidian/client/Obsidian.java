@@ -34,6 +34,7 @@ import org.obsidian.client.screen.account.AccountFile;
 import org.obsidian.client.screen.account.AccountGuiScreen;
 import org.obsidian.client.screen.account.AccountManager;
 import org.obsidian.client.screen.clickgui.ClickGuiScreen;
+import org.obsidian.client.ui.dropdown.DropDown;
 import org.obsidian.client.screen.flatgui.FlatGuiScreen;
 import org.obsidian.client.utils.file.FileManager;
 import org.obsidian.client.utils.other.Console;
@@ -88,6 +89,7 @@ public class Obsidian {
     private ClickGuiScreen clickGui;
     private FlatGuiScreen flatGui;
     private AccountGuiScreen accountGui;
+    private DropDown dropDown;
     private final Profiler profiler = new Profiler();
     private ServerTPS serverTps;
 
@@ -138,6 +140,7 @@ public class Obsidian {
         this.clickGui = new ClickGuiScreen();
         this.flatGui = new FlatGuiScreen();
         this.accountGui = new AccountGuiScreen();
+        this.dropDown = new DropDown();
     }
 
     private void initManagers() {
