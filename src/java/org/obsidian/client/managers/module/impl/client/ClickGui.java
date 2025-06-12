@@ -31,7 +31,7 @@ public class ClickGui extends Module {
     public void onKey(KeyboardPressEvent event) {
         if (event.getScreen() != null) return;
         if (event.isKey(getKey())) {
-            Minecraft.getInstance().displayScreen(Obsidian.inst().clickGui());
+            Minecraft.getInstance().displayScreen(Obsidian.inst().dropDown());
         }
     }
 
@@ -40,7 +40,7 @@ public class ClickGui extends Module {
         if (event.getScreen() != null) return;
 
         if (event.isKey(getKey())) {
-            Minecraft.getInstance().displayScreen(Obsidian.inst().clickGui());
+            Minecraft.getInstance().displayScreen(Obsidian.inst().dropDown());
         }
     }
 }
