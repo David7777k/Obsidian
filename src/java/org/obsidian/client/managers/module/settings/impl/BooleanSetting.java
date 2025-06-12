@@ -60,5 +60,6 @@ public class BooleanSetting extends Setting<Boolean> {
     }
 
     public void setValue(boolean b) {
+        set(b);
     }
 }

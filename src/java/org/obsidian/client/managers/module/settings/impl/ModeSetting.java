@@ -68,9 +68,10 @@ public class ModeSetting extends Setting<String> {
     }
 
     public String[] getModes() {
-        return null;
+        return values.toArray(new String[0]);
     }
 
     public void setValue(String text) {
+        set(text);
     }
 }
