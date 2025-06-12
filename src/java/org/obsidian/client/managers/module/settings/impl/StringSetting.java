@@ -59,10 +59,10 @@ public class StringSetting extends Setting<String> {
     }
 
     public String getDescription() {
-        return "";
+        return getName();
     }
 
     public void setValue(String text) {
-
+        set(text);
     }
 }

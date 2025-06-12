@@ -55,10 +55,10 @@ public class BindSetting extends Setting<Integer> {
     }
 
     public int getKey() {
-        return 0;
+        return getValue();
     }
 
     public void setKey(int i) {
-
+        set(i);
     }
 }

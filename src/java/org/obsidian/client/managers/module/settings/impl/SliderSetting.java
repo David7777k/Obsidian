@@ -54,17 +54,18 @@ public class SliderSetting extends Setting<Float> {
     }
 
     public double getMin() {
-        return 0;
+        return min;
     }
 
     public double getMax() {
-        return 0;
+        return max;
     }
 
     public void setValue(float clamp) {
+        set(Math.max(min, Math.min(max, clamp)));
     }
 
     public double getIncrement() {
-        return 0;
+        return increment;
     }
 }
