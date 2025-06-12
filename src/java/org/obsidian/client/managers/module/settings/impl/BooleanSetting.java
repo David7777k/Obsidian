@@ -58,4 +58,7 @@ public class BooleanSetting extends Setting<Boolean> {
     public boolean get() {
         return getValue();
     }
+
+    public void setValue(boolean b) {
+    }
 }

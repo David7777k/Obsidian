@@ -57,4 +57,12 @@ public class StringSetting extends Setting<String> {
         }
         return cachedValue;
     }
+
+    public String getDescription() {
+        return "";
+    }
+
+    public void setValue(String text) {
+
+    }
 }

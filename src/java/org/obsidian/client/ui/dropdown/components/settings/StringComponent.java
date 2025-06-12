@@ -1,18 +1,20 @@
 package org.obsidian.client.ui.dropdown.components.settings;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import org.obsidian.client.managers.module.settings.impl.StringSetting;
-import org.obsidian.client.ui.dropdown.impl.Component;
-import org.obsidian.client.ui.dropdown.utils.MathUtil;
-import org.obsidian.client.ui.dropdown.utils.ColorUtils;
-import org.obsidian.client.ui.dropdown.utils.Cursors;
-import org.obsidian.client.ui.dropdown.utils.DisplayUtils;
+
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
+import net.mojang.blaze3d.matrix.MatrixStack;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.lwjgl.glfw.GLFW;
+import org.obsidian.client.managers.module.settings.impl.StringSetting;
+import org.obsidian.client.ui.dropdown.impl.Component;
+import org.obsidian.client.ui.dropdown.utils.ColorUtils;
+import org.obsidian.client.ui.dropdown.utils.Cursors;
+import org.obsidian.client.ui.dropdown.utils.DisplayUtils;
+import org.obsidian.client.ui.dropdown.utils.MathUtil;
+import org.obsidian.client.utils.render.font.Fonts;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +40,6 @@ public class StringComponent extends Component {
 
     @Override
     public void render(MatrixStack stack, float mouseX, float mouseY) {
-        super.render(stack, mouseX, mouseY);
         text = setting.getValue();
         if (setting.isOnlyNumber() && !NumberUtils.isNumber(text)) {
             text = text.replaceAll("[a-zA-Z]", "");
@@ -163,7 +164,7 @@ public class StringComponent extends Component {
 
 
     private void drawSettingName(MatrixStack stack, String settingName, float x, float y) {
-        Fonts.montserrat.drawText(stack, settingName, x, y + TEXT_Y_OFFSET, ColorUtils.rgba(255,255,255,255), 6);
+        Fonts.montserrat.drawText(stack, settingName, x, y + TEXT_Y_OFFSET, ColorUtils.rgba(255, 255, 255, 255), 6);
     }
 
     private void drawBackground(float x, float y, float width, float height) {

@@ -1,16 +1,13 @@
 package org.obsidian.client.ui.dropdown.components.settings;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+
+import net.minecraft.client.Minecraft;
+import net.mojang.blaze3d.matrix.MatrixStack;
+import org.lwjgl.glfw.GLFW;
 import org.obsidian.client.managers.module.settings.impl.BindSetting;
 import org.obsidian.client.ui.dropdown.impl.Component;
-import org.obsidian.client.ui.dropdown.utils.KeyStorage;
-import org.obsidian.client.ui.dropdown.utils.MathUtil;
-import org.obsidian.client.ui.dropdown.utils.ColorUtils;
-import org.obsidian.client.ui.dropdown.utils.Cursors;
-import org.obsidian.client.ui.dropdown.utils.DisplayUtils;
+import org.obsidian.client.ui.dropdown.utils.*;
 import org.obsidian.client.utils.render.font.Fonts;
-import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
 
 public class BindComponent extends Component {
 
@@ -26,7 +23,6 @@ public class BindComponent extends Component {
 
     @Override
     public void render(MatrixStack stack, float mouseX, float mouseY) {
-        super.render(stack, mouseX, mouseY);
         Fonts.montserrat.drawText(stack, setting.getName(), getX() + 5, getY() + 6.5f / 2f + 1, ColorUtils.rgb(160, 163, 175), 6.5f, 0.05f);
         String bind = KeyStorage.getKey(setting.getKey());
 
@@ -38,7 +34,7 @@ public class BindComponent extends Component {
         float y = getY() + 5.5f / 2f + (5.5f / 2f) + (next ? 8 : 0);
         DisplayUtils.drawShadow(getX() + 5, getY() + 9, Fonts.montserrat.getWidth(bind, 5.5f, activated ? 0.1f : 0.05f) + 4, 5.5f + 4, 10, ColorUtils.rgba(25, 26, 40, 45));
 
-        DisplayUtils.drawRoundedRect(getX() + 5, getY() + 9,Fonts.montserrat.getWidth(bind, 5.5f, activated ? 0.1f : 0.05f) + 4, 5.5f + 4, 2, ColorUtils.rgba(25, 26, 40, 45));
+        DisplayUtils.drawRoundedRect(getX() + 5, getY() + 9, Fonts.montserrat.getWidth(bind, 5.5f, activated ? 0.1f : 0.05f) + 4, 5.5f + 4, 2, ColorUtils.rgba(25, 26, 40, 45));
         Fonts.montserrat.drawText(stack, bind, x, y, activated ? -1 : ColorUtils.rgb(255, 255, 255), 5.5f, activated ? 0.1f : 0.05f);
 
         if (isHovered(mouseX, mouseY)) {

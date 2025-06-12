@@ -1,11 +1,29 @@
 package org.obsidian.client.ui.dropdown.utils;
 
+import net.minecraft.util.math.vector.Vector4f;
+
 public class DisplayUtils {
-    public static void drawShadow(float x, float y, float w, float h, float r, int c) {}
-    public static void drawRoundedRect(float x, float y, float w, float h, float r, int c) {}
-    public static void drawRoundedRect(float x, float y, float w, float h, Object rounding, int c) {}
-    public static void drawRoundedRect(float x, float y, float w, float h, Object rounding, int c1, int c2, int c3, int c4) {}
-    public static void drawCircle(float x, float y, float r, int c) {}
-    public static void drawShadowCircle(float x, float y, float r, int c) {}
-    public static void drawRectVerticalW(float x, float y, float w, float h, int c1, int c2) {}
+    public static void drawShadow(float x, float y, float w, float h, float r, int c) {
+    }
+
+    public static void drawRoundedRect(float x, float y, float w, float h, float r, int c) {
+    }
+
+    public static void drawRoundedRect(float x, float y, float w, float h, Object rounding, int c) {
+    }
+
+    public static void drawRoundedRect(float x, float y, float w, float h, Object rounding, int c1, int c2, int c3, int c4) {
+    }
+
+    public static void drawCircle(float x, float y, float r, int c) {
+    }
+
+    public static void drawShadowCircle(float x, float y, float r, int c) {
+    }
+
+    public static void drawRectVerticalW(float x, float y, float w, float h, int c1, int c2) {
+    }
+
+    public static void drawRoundedRect(float v, float y, float v1, float v2, Vector4f roundingVector, Vector4i vector4i) {
+    }
 }

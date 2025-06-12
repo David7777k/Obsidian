@@ -1,8 +1,9 @@
 package org.obsidian.client.ui.dropdown;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.text.StringTextComponent;
+import net.mojang.blaze3d.matrix.MatrixStack;
 
 public class DropDown extends Screen {
     public DropDown() {

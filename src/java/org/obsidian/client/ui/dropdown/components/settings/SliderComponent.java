@@ -1,16 +1,17 @@
 package org.obsidian.client.ui.dropdown.components.settings;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.math.MathHelper;
+import net.mojang.blaze3d.matrix.MatrixStack;
+import org.lwjgl.glfw.GLFW;
 import org.obsidian.client.managers.module.settings.impl.SliderSetting;
 import org.obsidian.client.ui.dropdown.impl.Component;
-import org.obsidian.client.ui.dropdown.utils.MathUtil;
 import org.obsidian.client.ui.dropdown.utils.ColorUtils;
 import org.obsidian.client.ui.dropdown.utils.Cursors;
 import org.obsidian.client.ui.dropdown.utils.DisplayUtils;
+import org.obsidian.client.ui.dropdown.utils.MathUtil;
 import org.obsidian.client.utils.render.font.Fonts;
-import net.minecraft.client.Minecraft;
-import net.minecraft.util.math.MathHelper;
-import org.lwjgl.glfw.GLFW;
 
 public class SliderComponent extends Component {
 
@@ -27,14 +28,13 @@ public class SliderComponent extends Component {
 
     @Override
     public void render(MatrixStack stack, float mouseX, float mouseY) {
-        super.render(stack, mouseX, mouseY);
         Fonts.montserrat.drawText(stack, setting.getName(), getX() + 5, getY() + 4.5f / 2f + 1,
                 ColorUtils.rgb(255, 255, 255), 5.5f, 0.05f);
         Fonts.montserrat.drawText(stack, String.valueOf(setting.getValue()), getX() + getWidth() - 5 - Fonts.montserrat.getWidth(String.valueOf(setting.getValue()), 5.5f), getY() + 4.5f / 2f + 1,
                 ColorUtils.rgb(255, 255, 255), 5.5f, 0.05f);
 
         DisplayUtils.drawRoundedRect(getX() + 5, getY() + 11, getWidth() - 10, 2, 0.6f, ColorUtils.rgb(28, 28, 31));
-        anim = MathUtil.fast(anim, (getWidth() - 10) * (setting.getValue() - setting.getMin()) / (setting.getMax() - setting.getMin()), 20);
+        anim = MathUtil.fast(anim, (float) ((getWidth() - 10) * (setting.getValue() - setting.getMin()) / (setting.getMax() - setting.getMin())), 20);
         float sliderWidth = anim;
         DisplayUtils.drawRoundedRect(getX() + 5, getY() + 11, sliderWidth, 2, 0.6f, ColorUtils.rgb(25, 26, 50));
         DisplayUtils.drawCircle(getX() + 5 + sliderWidth, getY() + 12, 5, ColorUtils.rgb(129, 135, 255));

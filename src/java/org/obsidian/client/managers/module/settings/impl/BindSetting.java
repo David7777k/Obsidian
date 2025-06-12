@@ -53,4 +53,12 @@ public class BindSetting extends Setting<Integer> {
         // Возвращаем всегда актуальное значение
         return super.getValue();
     }
+
+    public int getKey() {
+        return 0;
+    }
+
+    public void setKey(int i) {
+
+    }
 }

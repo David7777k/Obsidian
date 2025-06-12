@@ -1,25 +1,21 @@
 package org.obsidian.client.ui.dropdown.components;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.Getter;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.math.vector.Vector4f;
+import net.mojang.blaze3d.matrix.MatrixStack;
+import org.lwjgl.glfw.GLFW;
 import org.obsidian.client.managers.module.Module;
 import org.obsidian.client.managers.module.settings.Setting;
 import org.obsidian.client.managers.module.settings.impl.*;
 import org.obsidian.client.ui.dropdown.components.settings.*;
 import org.obsidian.client.ui.dropdown.impl.Component;
-import org.obsidian.client.ui.dropdown.utils.ColorUtils;
-import org.obsidian.client.ui.dropdown.utils.Cursors;
-import org.obsidian.client.ui.dropdown.utils.DisplayUtils;
-import org.obsidian.client.ui.dropdown.utils.MathUtil;
-import org.obsidian.client.ui.dropdown.utils.Stencil;
-import org.obsidian.client.ui.dropdown.utils.Vector4i;
-import org.obsidian.client.utils.render.font.Fonts;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import lombok.Getter;
-import net.minecraft.client.Minecraft;
-import net.minecraft.util.math.vector.Vector4f;
-import org.lwjgl.glfw.GLFW;
+import org.obsidian.client.ui.dropdown.utils.*;
 import org.obsidian.client.utils.animation.Animation;
 import org.obsidian.client.utils.animation.util.Easings;
+import org.obsidian.client.utils.render.font.Fonts;
 
 @Getter
 public class ModuleComponent extends Component {
@@ -68,11 +64,11 @@ public class ModuleComponent extends Component {
             Stencil.readStencilBuffer(1);
             float y = getY() + 20;
             for (Component component : components) {
-                if (component.isVisible()){
+                if (component.isVisible()) {
                     component.setX(getX());
                     component.setY(y);
                     component.setWidth(getWidth());
-                    component.render(stack, mouseX, mouseY );
+                    component.render(stack, mouseX, mouseY);
                     y += component.getHeight();
                 }
             }
@@ -96,7 +92,6 @@ public class ModuleComponent extends Component {
         int color = ColorUtils.interpolate(-1, ColorUtils.rgb(161, 164, 177), (float) animation.getValue());
 
         animation.update();
-        super.render(stack, mouseX, mouseY);
 
         drawOutlinedRect(mouseX, mouseY, color);
 
@@ -153,7 +148,7 @@ public class ModuleComponent extends Component {
         DisplayUtils.drawRoundedRect(getX() + 2.5f, getY() + 0.5f, getWidth() - 5, getHeight() - 1, ROUNDING_VECTOR, ColorUtils.rgba(25, 26, 40, (int) (255 * 0.33)));
 
         Stencil.readStencilBuffer(0);
-        DisplayUtils.drawRoundedRect(getX() + 2, getY(), getWidth() - 5, getHeight(), ROUNDING_VECTOR, ColorUtils.rgba(25, 26, 40,165));
+        DisplayUtils.drawRoundedRect(getX() + 2, getY(), getWidth() - 5, getHeight(), ROUNDING_VECTOR, ColorUtils.rgba(25, 26, 40, 165));
         Stencil.uninitStencilBuffer();
         DisplayUtils.drawRoundedRect(getX() + 2, getY(), getWidth() - 5, getHeight() - 1, ROUNDING_VECTOR, new Vector4i(ColorUtils.rgba(25, 26, 40, (int) (255 * 0.33)), ColorUtils.rgba(25, 26, 40, (int) (255 * 0.33)), ColorUtils.rgba(25, 26, 40, (int) (255 * 0.33)), ColorUtils.rgba(25, 26, 40, (int) (255 * 0.33))));
         DisplayUtils.drawRoundedRect(getX() + 2, getY(), getWidth() - 5, getHeight() - 1, ROUNDING_VECTOR, ColorUtils.rgba(25, 26, 40, (int) (255 * 0.33)));

@@ -52,4 +52,19 @@ public class SliderSetting extends Setting<Float> {
         }
         return cachedValue;
     }
+
+    public double getMin() {
+        return 0;
+    }
+
+    public double getMax() {
+        return 0;
+    }
+
+    public void setValue(float clamp) {
+    }
+
+    public double getIncrement() {
+        return 0;
+    }
 }

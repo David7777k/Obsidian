@@ -1,6 +1,7 @@
 package org.obsidian.client.ui.dropdown.impl;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+
+import net.mojang.blaze3d.matrix.MatrixStack;
 
 public interface IBuilder {
 
@@ -9,10 +10,13 @@ public interface IBuilder {
 
     default void mouseClick(float mouseX, float mouseY, int mouse) {
     }
+
     default void charTyped(char codePoint, int modifiers) {
     }
+
     default void mouseRelease(float mouseX, float mouseY, int mouse) {
     }
+
     default void keyPressed(int key, int scanCode, int modifiers) {
     }
 }

@@ -1,19 +1,18 @@
 package org.obsidian.client.ui.dropdown.components.settings;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+
+import net.minecraft.client.Minecraft;
+import net.mojang.blaze3d.matrix.MatrixStack;
+import org.lwjgl.glfw.GLFW;
 import org.obsidian.client.managers.module.settings.impl.BooleanSetting;
 import org.obsidian.client.ui.dropdown.impl.Component;
-import org.obsidian.client.ui.dropdown.utils.MathUtil;
 import org.obsidian.client.ui.dropdown.utils.ColorUtils;
 import org.obsidian.client.ui.dropdown.utils.Cursors;
 import org.obsidian.client.ui.dropdown.utils.DisplayUtils;
-import org.obsidian.client.utils.render.font.Fonts;
-import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
+import org.obsidian.client.ui.dropdown.utils.MathUtil;
 import org.obsidian.client.utils.animation.Animation;
 import org.obsidian.client.utils.animation.util.Easings;
-
-import java.awt.*;
+import org.obsidian.client.utils.render.font.Fonts;
 
 public class BooleanComponent extends Component {
 
@@ -31,7 +30,6 @@ public class BooleanComponent extends Component {
 
     @Override
     public void render(MatrixStack stack, float mouseX, float mouseY) {
-        super.render(stack, mouseX, mouseY);
         animation.update();
         Fonts.montserrat.drawText(stack, setting.getName(), getX() + 5, getY() + 6.5f / 2f + 1, ColorUtils.rgb(255, 255, 255), 6.5f, 0.05f);
 

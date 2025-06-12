@@ -66,4 +66,11 @@ public class ModeSetting extends Setting<String> {
         }
         return cachedValue;
     }
+
+    public String[] getModes() {
+        return null;
+    }
+
+    public void setValue(String text) {
+    }
 }

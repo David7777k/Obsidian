@@ -14,21 +14,17 @@ import org.obsidian.client.screen.clickgui.ClickGuiScreen;
 import org.obsidian.client.screen.clickgui.component.WindowComponent;
 import org.obsidian.client.screen.clickgui.component.setting.SettingComponent;
 import org.obsidian.client.screen.clickgui.component.setting.impl.*;
-import org.obsidian.client.utils.animation.util.Easings;
 import org.obsidian.client.utils.animation.Animation;
+import org.obsidian.client.utils.animation.util.Easings;
 import org.obsidian.client.utils.keyboard.Keyboard;
-import org.obsidian.client.utils.math.Mathf;
 import org.obsidian.client.utils.other.SoundUtil;
 import org.obsidian.client.utils.render.color.ColorUtil;
-import org.obsidian.client.utils.render.draw.RectUtil;
 import org.obsidian.client.utils.render.draw.RenderUtil;
-import org.obsidian.client.utils.render.draw.StencilUtil;
-import org.obsidian.client.utils.render.font.Fonts;
+import org.obsidian.client.utils.render.draw.Round;
 import org.obsidian.client.utils.render.particle.Particle;
 import org.obsidian.common.impl.fastrandom.FastRandom;
 import org.obsidian.common.impl.taskript.Script;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -112,7 +108,7 @@ public class ModuleComponent extends WindowComponent {
         int bg = ColorUtil.replAlpha(backgroundColor(), alphaPC());
         int border = ColorUtil.replAlpha(Theme.getInstance().textColor(), alphaPC());
         if (toggleAnimation.getValue() > 0F) {
-            bg = ColorUtil.overCol(bg, Theme.getInstance().clientColor(), toggleAnimation.getValue());
+            bg = ColorUtil.overCol(bg, Theme.getInstance().clientColor(), (float) toggleAnimation.getValue());
         }
 
         if (hoverAnimation.getValue() > 0F) {

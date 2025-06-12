@@ -217,4 +217,14 @@ public class Font implements IMinecraft, IRender {
     public float getWidth(String text, float size, float thickness) {
         return font.getWidth(text, size, thickness);
     }
+
+    public void drawText(MatrixStack stack, String name, float v, float v1, int rgba, float v2, float v3) {
+    }
+
+    public float getHeight(float v) {
+        return 0;
+    }
+
+    public void drawText(MatrixStack stack, String settingName, float x, float v, int rgba, int i) {
+    }
 }

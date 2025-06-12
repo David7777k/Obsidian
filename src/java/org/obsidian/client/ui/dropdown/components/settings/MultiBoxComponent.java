@@ -1,16 +1,17 @@
 package org.obsidian.client.ui.dropdown.components.settings;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+
+import net.minecraft.client.Minecraft;
+import net.mojang.blaze3d.matrix.MatrixStack;
+import org.lwjgl.glfw.GLFW;
 import org.obsidian.client.managers.module.settings.impl.BooleanSetting;
 import org.obsidian.client.managers.module.settings.impl.MultiBooleanSetting;
 import org.obsidian.client.ui.dropdown.impl.Component;
-import org.obsidian.client.ui.dropdown.utils.MathUtil;
 import org.obsidian.client.ui.dropdown.utils.ColorUtils;
 import org.obsidian.client.ui.dropdown.utils.Cursors;
 import org.obsidian.client.ui.dropdown.utils.DisplayUtils;
+import org.obsidian.client.ui.dropdown.utils.MathUtil;
 import org.obsidian.client.utils.render.font.Fonts;
-import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
 
 public class MultiBoxComponent extends Component {
 
@@ -27,7 +28,6 @@ public class MultiBoxComponent extends Component {
 
     @Override
     public void render(MatrixStack stack, float mouseX, float mouseY) {
-        super.render(stack, mouseX, mouseY);
         Fonts.montserrat.drawText(stack, setting.getName(), getX() + 5, getY() + 2, ColorUtils.rgb(255, 255, 255), 5.5f, 0.05f);
         DisplayUtils.drawShadow(getX() + 5, getY() + 9, width + 5, 10 + heightPadding, 10, ColorUtils.rgba(25, 26, 40, 45));
 
@@ -50,11 +50,11 @@ public class MultiBoxComponent extends Component {
             }
             if (text.getValue()) {
                 Fonts.montserrat.drawText(stack, text.getName(), getX() + 8 + offset, getY() + 11.5f + heightoff,
-                        ColorUtils.rgba(255, 255, 255,255), 5.5f, 0.07f);
+                        ColorUtils.rgba(255, 255, 255, 255), 5.5f, 0.07f);
                 DisplayUtils.drawRoundedRect(getX() + 7 + offset, getY() + 10.5f + heightoff, textWidth + 0.8f, textHeight + 0.8f, 1.5f, ColorUtils.rgba(129, 135, 255, 165));
             } else {
                 Fonts.montserrat.drawText(stack, text.getName(), getX() + 8 + offset, getY() + 11.5f + heightoff,
-                        ColorUtils.rgba(255, 255, 255,255), 5.5f, 0.05f);
+                        ColorUtils.rgba(255, 255, 255, 255), 5.5f, 0.05f);
                 DisplayUtils.drawRoundedRect(getX() + 7 + offset, getY() + 10.5f + heightoff, textWidth + 0.8f, textHeight + 0.8f, 1.5f, ColorUtils.rgba(25, 26, 40, 165));
 
             }
