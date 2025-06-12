@@ -1,6 +1,6 @@
-package im.expensive.ui.dropdown.impl;
+package org.obsidian.client.screen.dropdown.impl;
 
-import im.expensive.ui.dropdown.Panel;
+import org.obsidian.client.screen.dropdown.Panel;
 import lombok.Getter;
 import lombok.Setter;
 

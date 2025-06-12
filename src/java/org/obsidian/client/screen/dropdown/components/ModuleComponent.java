@@ -1,21 +1,21 @@
-package im.expensive.ui.dropdown.components;
+package org.obsidian.client.screen.dropdown.components;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import im.expensive.Expensive;
-import im.expensive.functions.api.Function;
-import im.expensive.functions.settings.Setting;
-import im.expensive.functions.settings.impl.*;
-import im.expensive.ui.dropdown.components.settings.*;
-import im.expensive.ui.dropdown.impl.Component;
-import im.expensive.ui.styles.Style;
-import im.expensive.utils.client.KeyStorage;
-import im.expensive.utils.math.MathUtil;
-import im.expensive.utils.math.Vector4i;
-import im.expensive.utils.render.ColorUtils;
-import im.expensive.utils.render.Cursors;
-import im.expensive.utils.render.DisplayUtils;
-import im.expensive.utils.render.Stencil;
-import im.expensive.utils.render.font.Fonts;
+import org.obsidian.client.Obsidian;
+import org.obsidian.client.managers.module.Module;
+import org.obsidian.client.managers.module.settings.Setting;
+import org.obsidian.client.managers.module.settings.impl.*;
+import org.obsidian.client.screen.dropdown.components.settings.*;
+import org.obsidian.client.screen.dropdown.impl.Component;
+import org.obsidian.client.ui.styles.Style;
+import org.obsidian.client.utils.client.KeyStorage;
+import org.obsidian.client.utils.math.MathUtil;
+import org.obsidian.client.utils.math.Vector4i;
+import org.obsidian.client.utils.render.ColorUtils;
+import org.obsidian.client.utils.render.Cursors;
+import org.obsidian.client.utils.render.DisplayUtils;
+import org.obsidian.client.utils.render.Stencil;
+import org.obsidian.client.utils.render.font.Fonts;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
@@ -28,16 +28,16 @@ import ru.hogoshi.util.Easings;
 public class ModuleComponent extends Component {
     private final Vector4f ROUNDING_VECTOR = new Vector4f(5, 5, 5, 5);
 
-    private final Function function;
+    private final Module module;
     public Animation animation = new Animation();
     public boolean open;
     private boolean bind;
 
     private final ObjectArrayList<Component> components = new ObjectArrayList<>();
 
-    public ModuleComponent(Function function) {
-        this.function = function;
-        for (Setting<?> setting : function.getSettings()) {
+    public ModuleComponent(Module module) {
+        this.module = module;
+        for (Setting<?> setting : module.getSettings()) {
             if (setting instanceof BooleanSetting bool) {
                 components.add(new BooleanComponent(bool));
             }
@@ -99,9 +99,9 @@ public class ModuleComponent extends Component {
 
     @Override
     public void render(MatrixStack stack, float mouseX, float mouseY) {
-        int color = ColorUtils.interpolate(-1, ColorUtils.rgb(161, 164, 177), (float) function.getAnimation().getValue());
+        int color = ColorUtils.interpolate(-1, ColorUtils.rgb(161, 164, 177), (float) module.getAnimation().getValue());
 
-        function.getAnimation().update();
+        module.getAnimation().update();
         super.render(stack, mouseX, mouseY);
 
         drawOutlinedRect(mouseX, mouseY, color);
@@ -114,7 +114,7 @@ public class ModuleComponent extends Component {
     @Override
     public void mouseClick(float mouseX, float mouseY, int button) {
         if (isHovered(mouseX, mouseY, 20)) {
-            if (button == 0) function.toggle();
+            if (button == 0) module.toggle();
             if (button == 1) {
                 open = !open;
                 animation = animation.animate(open ? 1 : 0, 0.2, Easings.CIRC_OUT);
@@ -148,8 +148,8 @@ public class ModuleComponent extends Component {
         }
         if (bind) {
             if (key == GLFW.GLFW_KEY_DELETE) {
-                function.setBind(0);
-            } else function.setBind(key);
+                module.setBind(0);
+            } else module.setBind(key);
             bind = false;
         }
         super.keyPressed(key, scanCode, modifiers);
@@ -181,15 +181,15 @@ public class ModuleComponent extends Component {
 
     private void drawText(MatrixStack stack, int color) {
 
-        Fonts.montserrat.drawText(stack, function.getName(), getX() + 6, getY() + 6.5f, color, 7, 0.1f);
+        Fonts.montserrat.drawText(stack, module.getName(), getX() + 6, getY() + 6.5f, color, 7, 0.1f);
         if (components.stream().filter(Component::isVisible).count() >= 1) {
             if (bind) {
-                Fonts.montserrat.drawText(stack, function.getBind() == 0 ? "..." : KeyStorage.getReverseKey(function.getBind()), getX() + getWidth() - 6 - Fonts.montserrat.getWidth(function.getBind() == 0 ? "..." : KeyStorage.getReverseKey(function.getBind()), 6, 0.1f), getY() + Fonts.icons.getHeight(6) + 1, ColorUtils.rgb(161, 164, 177), 6, 0.1f);
+                Fonts.montserrat.drawText(stack, module.getBind() == 0 ? "..." : KeyStorage.getReverseKey(module.getBind()), getX() + getWidth() - 6 - Fonts.montserrat.getWidth(module.getBind() == 0 ? "..." : KeyStorage.getReverseKey(module.getBind()), 6, 0.1f), getY() + Fonts.icons.getHeight(6) + 1, ColorUtils.rgb(161, 164, 177), 6, 0.1f);
             } else
                 Fonts.icons.drawText(stack, !open ? "B" : "C", getX() + getWidth() - 6 - Fonts.icons.getWidth(!open ? "B" : "C", 6), getY() + Fonts.icons.getHeight(6) + 1, ColorUtils.rgb(161, 164, 177), 6);
         } else {
             if (bind) {
-                Fonts.montserrat.drawText(stack, function.getBind() == 0 ? "..." : KeyStorage.getReverseKey(function.getBind()), getX() + getWidth() - 6 - Fonts.montserrat.getWidth(function.getBind() == 0 ? "..." : KeyStorage.getReverseKey(function.getBind()), 6, 0.1f), getY() + Fonts.icons.getHeight(6) + 1, ColorUtils.rgb(161, 164, 177), 6, 0.1f);
+                Fonts.montserrat.drawText(stack, module.getBind() == 0 ? "..." : KeyStorage.getReverseKey(module.getBind()), getX() + getWidth() - 6 - Fonts.montserrat.getWidth(module.getBind() == 0 ? "..." : KeyStorage.getReverseKey(module.getBind()), 6, 0.1f), getY() + Fonts.icons.getHeight(6) + 1, ColorUtils.rgb(161, 164, 177), 6, 0.1f);
             }
         }
     }

@@ -1,4 +1,4 @@
-package im.expensive.ui.dropdown.impl;
+package org.obsidian.client.screen.dropdown.impl;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 

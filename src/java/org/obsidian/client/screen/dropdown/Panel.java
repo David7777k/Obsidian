@@ -1,4 +1,4 @@
-package im.expensive.ui.dropdown;
+package org.obsidian.client.screen.dropdown;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -6,19 +6,19 @@ import java.util.List;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 
-import im.expensive.Expensive;
-import im.expensive.functions.api.Category;
-import im.expensive.functions.api.Function;
-import im.expensive.ui.dropdown.components.ModuleComponent;
-import im.expensive.ui.dropdown.impl.Component;
-import im.expensive.ui.dropdown.impl.IBuilder;
-import im.expensive.utils.math.MathUtil;
-import im.expensive.utils.math.Vector4i;
-import im.expensive.utils.render.ColorUtils;
-import im.expensive.utils.render.DisplayUtils;
-import im.expensive.utils.render.Scissor;
-import im.expensive.utils.render.Stencil;
-import im.expensive.utils.render.font.Fonts;
+import org.obsidian.client.Obsidian;
+import org.obsidian.client.managers.module.Category;
+import org.obsidian.client.managers.module.Module;
+import org.obsidian.client.screen.dropdown.components.ModuleComponent;
+import org.obsidian.client.screen.dropdown.impl.Component;
+import org.obsidian.client.screen.dropdown.impl.IBuilder;
+import org.obsidian.client.utils.math.MathUtil;
+import org.obsidian.client.utils.math.Vector4i;
+import org.obsidian.client.utils.render.ColorUtils;
+import org.obsidian.client.utils.render.DisplayUtils;
+import org.obsidian.client.utils.render.Scissor;
+import org.obsidian.client.utils.render.Stencil;
+import org.obsidian.client.utils.render.font.Fonts;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
@@ -43,9 +43,9 @@ public class Panel implements IBuilder {
     public Panel(Category category) {
         this.category = category;
 
-        for (Function function : Expensive.getInstance().getFunctionRegistry().getFunctions()) {
-            if (function.getCategory() == category) {
-                ModuleComponent component = new ModuleComponent(function);
+        for (Module module : Obsidian.inst().moduleManager().values()) {
+            if (module.getCategory() == category) {
+                ModuleComponent component = new ModuleComponent(module);
                 component.setPanel(this);
                 modules.add(component);
             }

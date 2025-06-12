@@ -1,13 +1,13 @@
-package im.expensive.ui.dropdown;
+package org.obsidian.client.screen.dropdown;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import im.expensive.Expensive;
-import im.expensive.functions.api.Category;
-import im.expensive.ui.styles.Style;
-import im.expensive.utils.math.MathUtil;
-import im.expensive.utils.math.Vector4i;
-import im.expensive.utils.render.*;
-import im.expensive.utils.render.font.Fonts;
+import org.obsidian.client.Obsidian;
+import org.obsidian.client.managers.module.Category;
+import org.obsidian.client.ui.styles.Style;
+import org.obsidian.client.utils.math.MathUtil;
+import org.obsidian.client.utils.math.Vector4i;
+import org.obsidian.client.utils.render.*;
+import org.obsidian.client.utils.render.font.Fonts;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.MathHelper;
@@ -73,13 +73,13 @@ public class PanelStyle extends Panel {
 
         float H = 12;
 
-        for (Style style : Expensive.getInstance().getStyleManager().getStyleList()) {
+        for (Style style : Obsidian.inst().getStyleManager().getStyleList()) {
 
             if (MathUtil.isHovered(mouseX, mouseY, x + 5, y, width - 10 - 10, H)) {
                 hovered = true;
             }
 
-            if (Expensive.getInstance().getStyleManager().getCurrentStyle() == style) {
+            if (Obsidian.inst().getStyleManager().getCurrentStyle() == style) {
                 Fonts.montserrat.drawText(stack, style.getStyleName(), x + 0.5f * 1.5f + width / 2 - 28, y + H / 2 + 7 - Fonts.montserrat.getHeight(6) / 2, style.getFirstColor().getRGB(), 6f, 0.05f);
                 DisplayUtils.drawRoundedRect(x + 5f, y + 7, width / 2 - 40, H, 10, style.getFirstColor().getRGB());
                 DisplayUtils.drawShadow(x + 5f, y + 7.5f, width / 2 - 40, H, 10, style.getFirstColor().getRGB());
@@ -102,7 +102,7 @@ public class PanelStyle extends Panel {
         }
         Scissor.unset();
         Scissor.pop();
-        max = offset * Expensive.getInstance().getStyleManager().getStyleList().size() * 1.21f;
+        max = offset * Obsidian.inst().getStyleManager().getStyleList().size() * 1.21f;
     }
 
     @Override
@@ -117,12 +117,12 @@ public class PanelStyle extends Panel {
         float x = this.x + 5;
         float y = this.y + offset + header + 5 + getAnimatedScrool();
 
-        for (Style style : Expensive.getInstance().getStyleManager().getStyleList()) {
+        for (Style style : Obsidian.inst().getStyleManager().getStyleList()) {
             float barHeight = 12;
             float barY = y + 7.5f;
 
             if (MathUtil.isHovered(mouseX, mouseY, x + 5, barY, width / 2 - 40, barHeight)) {
-                Expensive.getInstance().getStyleManager().setCurrentStyle(style);
+                Obsidian.inst().getStyleManager().setCurrentStyle(style);
             }
             y += 5 + barHeight;
             offset++;

@@ -1,14 +1,14 @@
-package im.expensive.ui.dropdown.components.settings;
+package org.obsidian.client.screen.dropdown.components.settings;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import im.expensive.functions.settings.impl.BindSetting;
-import im.expensive.ui.dropdown.impl.Component;
-import im.expensive.utils.client.KeyStorage;
-import im.expensive.utils.math.MathUtil;
-import im.expensive.utils.render.ColorUtils;
-import im.expensive.utils.render.Cursors;
-import im.expensive.utils.render.DisplayUtils;
-import im.expensive.utils.render.font.Fonts;
+import org.obsidian.client.managers.module.settings.impl.BindSetting;
+import org.obsidian.client.screen.dropdown.impl.Component;
+import org.obsidian.client.utils.client.KeyStorage;
+import org.obsidian.client.utils.math.MathUtil;
+import org.obsidian.client.utils.render.ColorUtils;
+import org.obsidian.client.utils.render.Cursors;
+import org.obsidian.client.utils.render.DisplayUtils;
+import org.obsidian.client.utils.render.font.Fonts;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
 

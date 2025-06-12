@@ -1,11 +1,11 @@
-package im.expensive.ui.dropdown;
+package org.obsidian.client.screen.dropdown;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import im.expensive.utils.client.ClientUtil;
-import im.expensive.utils.client.Vec2i;
-import im.expensive.utils.render.*;
+import org.obsidian.client.utils.client.ClientUtil;
+import org.obsidian.client.utils.client.Vec2i;
+import org.obsidian.client.utils.render.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.MathHelper;
 import org.lwjgl.glfw.GLFW;
@@ -13,10 +13,10 @@ import org.lwjgl.glfw.GLFW;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 
-import im.expensive.functions.api.Category;
-import im.expensive.utils.CustomFramebuffer;
-import im.expensive.utils.client.IMinecraft;
-import im.expensive.utils.math.MathUtil;
+import org.obsidian.client.managers.module.Category;
+import org.obsidian.client.utils.render.framebuffer.CustomFramebuffer;
+import org.obsidian.client.api.interfaces.IMinecraft;
+import org.obsidian.client.utils.math.MathUtil;
 import lombok.Getter;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.math.vector.Vector4f;
